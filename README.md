@@ -65,6 +65,17 @@ Birinchi platforma admini:
 docker compose exec api python -m app.cli make-admin +998901234567
 ```
 
+### Serverga bitta buyruq bilan (o'z kompyuteringizdan)
+
+```bash
+git checkout claude/gracious-brahmagupta-4vl0o5 && git pull
+bash deploy/install_remote.sh            # HOST=root@<ip> KEY=~/.ssh/<kalit> APP_DIR=/home/online_savdo (standart)
+```
+
+Skript serverni tekshiradi (Docker bo'lmasa to'xtaydi), 8090–8099 oralig'idan bo'sh port tanlaydi, kodni `APP_DIR` ga
+ko'chiradi, kalitlarni yashirin so'rab serverdagi `.env` ga (chmod 600) yozadi, `docker compose` bilan ishga tushiradi va
+platforma adminini yaratadi. Qayta ishga tushirish — yangilash (mavjud `.env` saqlanadi; `--reconfigure` — qayta sozlash).
+
 ### Domensiz serverga (boshqa loyihalar bilan yonma-yon)
 
 Domen/HTTPS bo'lmasa bot **polling** rejimida ishlaydi (webhook shart emas), sayt esa alohida portda:

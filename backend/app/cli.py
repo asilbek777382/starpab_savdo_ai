@@ -38,7 +38,10 @@ def main() -> int:
     p.add_argument("phone")
     p.add_argument("--name", default="")
     p.add_argument("--password", default=None, help="Berilmasa so'raladi")
+    p.add_argument("--password-stdin", action="store_true", help="Parolni stdin'dan o'qish (skriptlar uchun)")
     args = parser.parse_args()
+    if args.password_stdin:
+        args.password = sys.stdin.readline().rstrip("\n")
     try:
         print(asyncio.run(make_admin(args.phone, args.name, args.password)))
     except AuthError as exc:
