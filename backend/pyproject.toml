@@ -1,7 +1,7 @@
 [project]
 name = "navbatchi"
 version = "0.1.0"
-description = "Navbatchi: Telegram'da savdo qiladigan do'konlar uchun 24/7 AI sotuvchi"
+description = "Navbatchi AI: Telegram'da savdo qiladigan do'konlar uchun 24/7 AI sotuvchi"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
