@@ -23,6 +23,15 @@ class Settings(BaseSettings):
     # webhook — Telegram HTTPS manzilga yuboradi; polling — domen/HTTPS yo'q serverlar uchun (alohida bot jarayoni)
     bot_mode: str = "webhook"
 
+    # Instagram (Instagram API with Instagram Login). Meta ilova sozlamalaridan olinadi
+    ig_app_id: str = ""
+    ig_app_secret: str = ""
+    ig_verify_token: str = ""
+    ig_graph_version: str = "v26.0"
+    ig_graph_url: str = "https://graph.instagram.com"
+    ig_oauth_url: str = "https://api.instagram.com"
+    ig_authorize_url: str = "https://www.instagram.com/oauth/authorize"
+
     # LLM (hujjat: arzon/tez model bilan boshlash, murakkabda kuchliroqqa o'tish)
     anthropic_api_key: str = ""
     llm_model: str = "claude-haiku-4-5"

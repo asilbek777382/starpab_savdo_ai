@@ -55,6 +55,9 @@ class Channel(TimestampMixin, Base):
     can_reply: Mapped[bool] = mapped_column(Boolean, default=False)
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     token_encrypted: Mapped[str | None] = mapped_column(Text)
+    token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Masalan Instagram @username — panel va xabarnomalarda ko'rsatish uchun
+    display_name: Mapped[str | None] = mapped_column(String(200))
 
 
 class ShopSettings(Base):

@@ -17,13 +17,14 @@ from app.services.ingest import (
     get_or_create_customer,
     ingest_customer_message,
     ingest_staff_message,
+    tg_sender,
 )
 from app.services.orders import set_order_status
+from app.services.outbound import build_outbound, within_messaging_window
 from app.services.shops import create_shop, get_channel, shops_of_user
 from app.services.usage import check_limits, current_usage
 from app.telegram import texts
 from app.telegram.notify import order_keyboard, order_text
-from app.telegram.outbound import TelegramOutbound
 
 log = logging.getLogger(__name__)
 router = Router(name="main")
@@ -169,7 +170,7 @@ async def on_customer_start(message: TgMessage, command: CommandObject) -> None:
             await message.answer(texts.CUSTOMER_NO_SHOP)
             return
         channel = await get_channel(session, shop.id, "tg_bot")
-        customer = await get_or_create_customer(session, channel, message.from_user, message.chat.id)
+        customer = await get_or_create_customer(session, channel, tg_sender(message.from_user, message.chat.id))
         await get_open_conversation(session, customer)
         await session.commit()
     # Mijoz bir nechta do'kon havolasidan kirgan bo'lishi mumkin: oxirgi tanlangani faol
@@ -359,16 +360,21 @@ CUSTOMER_NOTICES = {
 }
 
 
-async def notify_customer_about_order(bot: Bot, session, order: Order) -> None:
+async def notify_customer_about_order(session, order: Order) -> None:
+    """Buyurtma holati o'zgarganini mijozga o'sha kanal orqali yozadi (Instagram'da 24 soatlik oyna ichida)."""
     customer = await session.get(Customer, order.customer_id)
     channel = await session.get(Channel, customer.channel_id)
     if channel.type == "test" or order.status not in CUSTOMER_NOTICES:
         return
-    bcid = channel.business_connection_id if channel.type == "tg_business" else None
+    conv = await session.get(Conversation, order.conversation_id) if order.conversation_id else None
+    if not within_messaging_window(channel, conv):
+        log.info("Instagram 24 soatlik oyna yopiq — buyurtma #%s holati yuborilmadi", order.number)
+        return
+    outbound = build_outbound(get_runtime(), channel, customer)
+    if outbound is None:
+        return
     try:
-        await TelegramOutbound(bot, customer.chat_id, bcid).send_text(
-            CUSTOMER_NOTICES[order.status].format(number=order.number)
-        )
+        await outbound.send_text(CUSTOMER_NOTICES[order.status].format(number=order.number))
     except Exception:  # noqa: BLE001
         log.warning("Mijozga buyurtma holati yuborilmadi", exc_info=True)
 
@@ -388,12 +394,13 @@ async def on_order_action(call: CallbackQuery, bot: Bot) -> None:
         await set_order_status(session, order, status)
         await session.commit()
         customer = await session.get(Customer, order.customer_id)
-        await notify_customer_about_order(bot, session, order)
+        channel = await session.get(Channel, customer.channel_id)
+        await notify_customer_about_order(session, order)
         try:
             await call.message.edit_text(
                 order_text(order, customer) + f"\n\nHolat: <b>{status}</b>",
                 parse_mode="HTML",
-                reply_markup=order_keyboard(order, customer),
+                reply_markup=order_keyboard(order, customer, channel.type),
             )
         except Exception:  # noqa: BLE001
             log.debug("Xabar tahrirlanmadi", exc_info=True)

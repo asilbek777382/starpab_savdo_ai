@@ -202,9 +202,11 @@ async def _send_photos(ctx: TurnContext, a: SendPhotosIn) -> dict:
     images = product.images[:MAX_PHOTOS]
     if not images:
         return {"sent": 0, "note": "Bu mahsulotning rasmi yo'q"}
-    file_ids = await ctx.outbound.send_photos([img.telegram_file_id or img.url for img in images], a.caption)
+    use_file_ids = getattr(ctx.outbound, "supports_telegram_file_ids", False)
+    sources = [img.telegram_file_id if use_file_ids and img.telegram_file_id else img.url for img in images]
+    file_ids = await ctx.outbound.send_photos(sources, a.caption)
     for img, fid in zip(images, file_ids, strict=False):
-        if fid and not img.telegram_file_id:
+        if use_file_ids and fid and not img.telegram_file_id:
             img.telegram_file_id = fid  # keyingi safar qayta yuklamaslik uchun
     return {"sent": len(images)}
 

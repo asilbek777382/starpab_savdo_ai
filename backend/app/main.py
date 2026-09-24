@@ -14,6 +14,8 @@ from app.api import (
     catalog,
     channels,
     conversations,
+    instagram,
+    instagram_webhook,
     leads,
     orders,
     shops,
@@ -53,7 +55,9 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Navbatchi AI", version="0.1.0", lifespan=lifespan)
     for module in (
         telegram_webhook,
+        instagram_webhook,
         auth,
+        instagram,
         shops,
         channels,
         catalog,

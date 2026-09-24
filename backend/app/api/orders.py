@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import CurrentUser, current_user
 from app.db import get_session
 from app.models import ORDER_STATUSES, Order
-from app.runtime import get_runtime
 from app.schemas.api import OrderOut, OrderStatusIn
 from app.services.orders import get_order, set_order_status
 from app.telegram.handlers import notify_customer_about_order
@@ -53,7 +52,6 @@ async def change_status(
     changed = order.status != body.status
     await set_order_status(session, order, body.status)
     await session.commit()
-    bot = get_runtime().bot
-    if changed and bot is not None:
-        await notify_customer_about_order(bot, session, order)
+    if changed:
+        await notify_customer_about_order(session, order)
     return OrderOut.model_validate(order)

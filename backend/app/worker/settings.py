@@ -2,6 +2,7 @@ import logging
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
+from arq import cron
 from arq.connections import RedisSettings
 from redis.asyncio import Redis
 
@@ -9,7 +10,7 @@ from app.ai.llm.factory import build_llm
 from app.config import get_settings
 from app.runtime import Runtime, get_runtime, set_runtime
 from app.services.embeddings import get_embedding_provider
-from app.worker.tasks import enrich_product, process_conversation
+from app.worker.tasks import enrich_product, process_conversation, refresh_instagram_tokens
 
 logging.basicConfig(level=logging.INFO)
 
@@ -37,6 +38,7 @@ async def shutdown(ctx: dict) -> None:
 
 class WorkerSettings:
     functions = [process_conversation, enrich_product]
+    cron_jobs = [cron(refresh_instagram_tokens, hour=3, minute=0)]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = RedisSettings.from_dsn(get_settings().redis_url)

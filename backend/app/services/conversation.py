@@ -6,6 +6,7 @@ import io
 import logging
 from dataclasses import dataclass, field
 
+import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,11 +17,12 @@ from app.config import get_settings
 from app.models import Channel, Conversation, Customer, Message, Shop, ShopSettings
 from app.runtime import Runtime
 from app.services.handoff import ai_may_reply, handoff_event, handoff_reply_for, mark_handoff, wants_human
+from app.services.outbound import build_outbound
 from app.services.ratelimit import add_shop_tokens, shop_tokens_today
 from app.services.stt import transcribe
 from app.services.usage import LIMIT_MESSAGES, add_usage, check_limits
 from app.telegram.notify import TelegramNotifier, notify_shop
-from app.telegram.outbound import Outbound, TelegramOutbound
+from app.telegram.outbound import Outbound
 
 log = logging.getLogger(__name__)
 
@@ -43,18 +45,31 @@ async def _typing_loop(outbound: Outbound) -> None:
         await asyncio.sleep(4)
 
 
+async def _download_voice(rt: Runtime, media: dict) -> bytes | None:
+    """Telegram: file_id orqali; Instagram: attachment URL orqali."""
+    if media.get("url"):
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(media["url"])
+            resp.raise_for_status()
+            return resp.content
+    if media.get("file_id") and rt.bot is not None:
+        buf = io.BytesIO()
+        await rt.bot.download(media["file_id"], destination=buf)
+        return buf.getvalue()
+    return None
+
+
 async def _transcribe_voices(rt: Runtime, pending: list[Message]) -> None:
     for msg in pending:
         if not (msg.media and msg.media.get("type") == "voice") or msg.media.get("transcribed"):
             continue
         text = None
-        if rt.bot is not None:
-            try:
-                buf = io.BytesIO()
-                await rt.bot.download(msg.media["file_id"], destination=buf)
-                text = await transcribe(buf.getvalue())
-            except Exception:  # noqa: BLE001
-                log.warning("Ovozli xabar yuklanmadi", exc_info=True)
+        try:
+            audio = await _download_voice(rt, msg.media)
+            if audio:
+                text = await transcribe(audio)
+        except Exception:  # noqa: BLE001
+            log.warning("Ovozli xabar yuklanmadi", exc_info=True)
         msg.content = f"{msg.content}\n{text}".strip() if text else (msg.content or VOICE_FAILED)
         msg.media = {**msg.media, "transcribed": bool(text)}
 
@@ -118,10 +133,9 @@ async def reply_to_conversation(
         return ReplyResult("cannot_reply")
 
     if outbound is None:
-        if rt.bot is None:
-            return ReplyResult("no_bot")
-        bcid = channel.business_connection_id if channel.type == "tg_business" else None
-        outbound = TelegramOutbound(rt.bot, customer.chat_id, bcid)
+        outbound = build_outbound(rt, channel, customer)
+        if outbound is None:
+            return ReplyResult("no_outbound")
     if notifier is None:
         notifier = TelegramNotifier(rt.bot, session, shop.id) if rt.bot is not None else NullNotifier()
 

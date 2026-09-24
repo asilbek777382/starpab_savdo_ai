@@ -6,9 +6,10 @@ from sqlalchemy import Date, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, current_user
+from app.api.instagram import instagram_configured
 from app.config import get_settings
 from app.db import get_session
-from app.models import Channel, Conversation, Lead, Message, Order
+from app.models import PLANS, Channel, Conversation, Lead, Message, Order
 from app.schemas.api import ChannelOut, ChannelsOut, DailyPoint
 from app.telegram.handlers import bot_link
 
@@ -19,11 +20,15 @@ LOCAL_TZ = "Asia/Tashkent"
 @router.get("/channels", response_model=ChannelsOut)
 async def channels(user: CurrentUser = Depends(current_user), session: AsyncSession = Depends(get_session)):
     rows = list(await session.scalars(select(Channel).where(Channel.shop_id == user.shop.id, Channel.type != "test")))
+    instagram = next((c for c in rows if c.type == "instagram" and c.is_enabled), None)
     return ChannelsOut(
         channels=[ChannelOut.model_validate(c) for c in rows],
         bot_username=get_settings().bot_username,
         bot_link=bot_link(user.shop.id),
         business_connected=any(c.type == "tg_business" and c.is_enabled and c.can_reply for c in rows),
+        instagram_configured=instagram_configured(),
+        instagram_allowed=bool(PLANS.get(user.shop.plan, PLANS["start"]).get("instagram")),
+        instagram=ChannelOut.model_validate(instagram) if instagram else None,
     )
 
 

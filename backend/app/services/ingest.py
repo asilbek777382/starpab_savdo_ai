@@ -1,11 +1,10 @@
-"""Kiruvchi Telegram xabarlarini saqlash va AI javobini navbatga qo'yish."""
+"""Kiruvchi xabarlarni (Telegram, Instagram) saqlash va AI javobini navbatga qo'yish."""
 
 import logging
 import uuid
 from dataclasses import dataclass
 
 from aiogram.types import Message as TgMessage
-from aiogram.types import User as TgUser
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,28 +46,44 @@ def extract(message: TgMessage) -> Extracted:
     return Extracted(text=text)
 
 
-async def get_or_create_customer(session: AsyncSession, channel: Channel, user: TgUser, chat_id: int) -> Customer:
+@dataclass
+class Sender:
+    """Kanaldan mustaqil mijoz ma'lumoti (Telegram user yoki Instagram IGSID)."""
+
+    user_id: int
+    chat_id: int
+    name: str | None = None
+    username: str | None = None
+    language: str | None = None
+
+
+def tg_sender(user, chat_id: int) -> Sender:
+    return Sender(user.id, chat_id, user.full_name, user.username, user.language_code)
+
+
+async def get_or_create_customer(session: AsyncSession, channel: Channel, sender: Sender) -> Customer:
     customer = await session.scalar(
         select(Customer).where(
             Customer.shop_id == channel.shop_id,
             Customer.channel_id == channel.id,
-            Customer.external_user_id == user.id,
+            Customer.external_user_id == sender.user_id,
         )
     )
     if customer is None:
         customer = Customer(
             shop_id=channel.shop_id,
             channel_id=channel.id,
-            external_user_id=user.id,
-            chat_id=chat_id,
-            name=user.full_name,
-            username=user.username,
-            language=user.language_code,
+            external_user_id=sender.user_id,
+            chat_id=sender.chat_id,
+            name=sender.name,
+            username=sender.username,
+            language=sender.language,
         )
         session.add(customer)
         await session.flush()
     else:
-        customer.username = user.username or customer.username
+        customer.username = sender.username or customer.username
+        customer.name = customer.name or sender.name
     return customer
 
 
@@ -96,22 +111,24 @@ async def get_open_conversation(session: AsyncSession, customer: Customer) -> Co
     return conv
 
 
-async def ingest_customer_message(
-    session: AsyncSession, rt: Runtime, channel: Channel, message: TgMessage
+async def ingest_incoming(
+    session: AsyncSession,
+    rt: Runtime,
+    channel: Channel,
+    sender: Sender,
+    data: Extracted,
+    external_message_id: int | None = None,
 ) -> Conversation | None:
+    """Mijoz xabarini saqlaydi. None — rate limit tufayli qabul qilinmadi."""
     s = get_settings()
-    user = message.from_user
-    if user is None:
-        return None
-    if not await customer_allowed(rt.redis, channel.shop_id, user.id, s.customer_msgs_per_minute):
-        log.info("Rate limit: shop=%s user=%s", channel.shop_id, user.id)
+    if not await customer_allowed(rt.redis, channel.shop_id, sender.user_id, s.customer_msgs_per_minute):
+        log.info("Rate limit: shop=%s user=%s", channel.shop_id, sender.user_id)
         return None
 
-    customer = await get_or_create_customer(session, channel, user, message.chat.id)
+    customer = await get_or_create_customer(session, channel, sender)
     conv = await get_open_conversation(session, customer)
     await touch_conversation_window(session, conv)
 
-    data = extract(message)
     contact = dict(conv.contact or {})
     if data.location:
         contact["location"] = data.location
@@ -129,18 +146,27 @@ async def ingest_customer_message(
             role="customer",
             content=data.text,
             media=data.media,
-            external_message_id=message.message_id,
+            external_message_id=external_message_id,
         )
     )
     await session.flush()
     return conv
 
 
-async def ingest_staff_message(session: AsyncSession, channel: Channel, message: TgMessage) -> None:
+async def ingest_customer_message(
+    session: AsyncSession, rt: Runtime, channel: Channel, message: TgMessage
+) -> Conversation | None:
+    if message.from_user is None:
+        return None
+    sender = tg_sender(message.from_user, message.chat.id)
+    return await ingest_incoming(session, rt, channel, sender, extract(message), message.message_id)
+
+
+async def record_staff_message(
+    session: AsyncSession, channel: Channel, customer_sender: Sender, text: str, external_message_id: int | None = None
+) -> None:
     """Sotuvchi o'z akkauntidan mijozga yozdi — xabar saqlanadi va AI shu suhbatda jim turadi."""
-    chat = message.chat
-    fake_user = TgUser(id=chat.id, is_bot=False, first_name=chat.first_name or chat.title or "", username=chat.username)
-    customer = await get_or_create_customer(session, channel, fake_user, chat.id)
+    customer = await get_or_create_customer(session, channel, customer_sender)
     conv = await get_open_conversation(session, customer)
     settings = await session.get(ShopSettings, channel.shop_id)
     mark_staff_takeover(conv, settings, get_settings().default_handoff_silence_minutes)
@@ -149,8 +175,8 @@ async def ingest_staff_message(session: AsyncSession, channel: Channel, message:
             shop_id=channel.shop_id,
             conversation_id=conv.id,
             role="staff",
-            content=message.text or message.caption or f"[{message.content_type}]",
-            external_message_id=message.message_id,
+            content=text,
+            external_message_id=external_message_id,
             answered=True,
         )
     )
@@ -160,6 +186,13 @@ async def ingest_staff_message(session: AsyncSession, channel: Channel, message:
     )
     for m in pending:
         m.answered = True
+
+
+async def ingest_staff_message(session: AsyncSession, channel: Channel, message: TgMessage) -> None:
+    chat = message.chat
+    sender = Sender(chat.id, chat.id, chat.full_name or chat.title, chat.username)
+    text = message.text or message.caption or f"[{message.content_type}]"
+    await record_staff_message(session, channel, sender, text, message.message_id)
 
 
 def debounce_key(conv_id: int) -> str:

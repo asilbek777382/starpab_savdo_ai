@@ -19,6 +19,8 @@ class Outbound(Protocol):
 
 
 class TelegramOutbound:
+    supports_telegram_file_ids = True
+
     def __init__(self, bot: Bot, chat_id: int, business_connection_id: str | None = None) -> None:
         self.bot, self.chat_id, self.bcid = bot, chat_id, business_connection_id
 

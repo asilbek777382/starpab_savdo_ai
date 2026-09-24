@@ -8,10 +8,10 @@ from app.models.common import TimestampMixin
 
 # Hujjatdagi tariflar: narx (so'm/oy) va oylik suhbatlar limiti
 PLANS: dict[str, dict] = {
-    "trial": {"price": 0, "conversations": 300, "max_products": 300},
-    "start": {"price": 149_000, "conversations": 300, "max_products": 300},
-    "business": {"price": 299_000, "conversations": 1_000, "max_products": 5_000},
-    "pro": {"price": 599_000, "conversations": 3_000, "max_products": None},
+    "trial": {"price": 0, "conversations": 300, "max_products": 300, "instagram": True},
+    "start": {"price": 149_000, "conversations": 300, "max_products": 300, "instagram": False},
+    "business": {"price": 299_000, "conversations": 1_000, "max_products": 5_000, "instagram": True},
+    "pro": {"price": 599_000, "conversations": 3_000, "max_products": None, "instagram": True},
 }
 EXTRA_PACK = {"price": 29_000, "conversations": 100}
 

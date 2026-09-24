@@ -70,6 +70,9 @@ async def _row(session: AsyncSession, shop: Shop) -> AdminShopRow:
     business = await session.scalar(
         select(Channel.id).where(Channel.shop_id == shop.id, Channel.type == "tg_business", Channel.is_enabled)
     )
+    instagram = await session.scalar(
+        select(Channel.id).where(Channel.shop_id == shop.id, Channel.type == "instagram", Channel.is_enabled)
+    )
     return AdminShopRow(
         id=shop.id,
         name=shop.name,
@@ -84,6 +87,7 @@ async def _row(session: AsyncSession, shop: Shop) -> AdminShopRow:
         orders_30d=int(orders or 0),
         leads_30d=int(leads or 0),
         business_connected=business is not None,
+        instagram_connected=instagram is not None,
         created_at=shop.created_at,
     )
 

@@ -267,6 +267,8 @@ class ChannelOut(ORM):
     type: str
     can_reply: bool
     is_enabled: bool
+    display_name: str | None = None
+    token_expires_at: datetime | None = None
 
 
 class ChannelsOut(BaseModel):
@@ -274,6 +276,9 @@ class ChannelsOut(BaseModel):
     bot_username: str
     bot_link: str
     business_connected: bool
+    instagram_configured: bool = False
+    instagram_allowed: bool = False
+    instagram: ChannelOut | None = None
 
 
 class DailyPoint(BaseModel):
@@ -300,6 +305,7 @@ class AdminShopRow(BaseModel):
     orders_30d: int
     leads_30d: int
     business_connected: bool
+    instagram_connected: bool = False
     created_at: datetime
 
 

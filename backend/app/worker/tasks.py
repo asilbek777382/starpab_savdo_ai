@@ -1,14 +1,18 @@
 import logging
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.db import get_sessionmaker
-from app.models import Category, Product
+from app.instagram import client as ig
+from app.models import Category, Channel, Product
 from app.runtime import get_runtime
 from app.services.catalog import SYNONYMS_MARKER, with_synonyms
 from app.services.conversation import reply_to_conversation
+from app.services.crypto import decrypt, encrypt
 from app.services.ingest import debounce_key
+from app.telegram.notify import notify_shop
 
 log = logging.getLogger(__name__)
 
@@ -61,3 +65,38 @@ async def enrich_product(ctx: dict, product_id: int) -> str:
                 log.warning("Embedding hisoblanmadi (product=%s)", product_id, exc_info=True)
         await session.commit()
     return "ok"
+
+
+REFRESH_BEFORE = timedelta(days=10)
+
+
+async def refresh_instagram_tokens(ctx: dict) -> str:
+    """Instagram long-lived tokenlari ~60 kun yashaydi: 10 kun qolganda yangilanadi."""
+    rt = get_runtime()
+    refreshed = failed = 0
+    async with get_sessionmaker()() as session:
+        channels = await session.scalars(
+            select(Channel).where(
+                Channel.type == "instagram",
+                Channel.is_enabled,
+                Channel.token_encrypted.is_not(None),
+                Channel.token_expires_at < datetime.now(UTC) + REFRESH_BEFORE,
+            )
+        )
+        for channel in channels:
+            try:
+                token = await ig.refresh_token(decrypt(channel.token_encrypted) or "")
+            except ig.InstagramError:
+                failed += 1
+                log.warning("Instagram token yangilanmadi (channel=%s)", channel.id, exc_info=True)
+                if rt.bot is not None and await rt.redis.set(f"warn:{channel.shop_id}:igtoken", 1, nx=True, ex=86400):
+                    await notify_shop(rt.bot, session, channel.shop_id, IG_RECONNECT)
+                continue
+            channel.token_encrypted = encrypt(token.access_token)
+            channel.token_expires_at = token.expires_at
+            refreshed += 1
+        await session.commit()
+    return f"refreshed={refreshed} failed={failed}"
+
+
+IG_RECONNECT = "⚠️ Instagram ulanishi muddati tugayapti. Panel → Ulash → Instagram'ni qayta ulang."

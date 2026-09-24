@@ -17,8 +17,18 @@ from app.models import Channel, Conversation, Customer, Lead, Order, ShopSetting
 log = logging.getLogger(__name__)
 
 
-def customer_link(customer: Customer) -> str:
+def customer_link(customer: Customer, channel_type: str = "tg_business") -> str | None:
+    """Sotuvchi mijozga bir bosishda yozishi uchun havola (bo'lmasa None)."""
+    if channel_type == "instagram":
+        return f"https://ig.me/m/{customer.username}" if customer.username else None
+    if channel_type == "test":
+        return None
     return f"https://t.me/{customer.username}" if customer.username else f"tg://user?id={customer.external_user_id}"
+
+
+def _write_button(customer: Customer, channel_type: str) -> list[list[InlineKeyboardButton]]:
+    link = customer_link(customer, channel_type)
+    return [[InlineKeyboardButton(text="💬 Mijozga yozish", url=link)]] if link else []
 
 
 def order_text(order: Order, customer: Customer, test: bool = False) -> str:
@@ -43,7 +53,7 @@ def order_text(order: Order, customer: Customer, test: bool = False) -> str:
     return "\n".join(lines)
 
 
-def order_keyboard(order: Order, customer: Customer) -> InlineKeyboardMarkup:
+def order_keyboard(order: Order, customer: Customer, channel_type: str = "tg_business") -> InlineKeyboardMarkup:
     rows = []
     if order.status == "new":
         rows.append(
@@ -54,7 +64,7 @@ def order_keyboard(order: Order, customer: Customer) -> InlineKeyboardMarkup:
         )
     elif order.status == "confirmed":
         rows.append([InlineKeyboardButton(text="🚚 Yuborildi", callback_data=f"ord:s:{order.id}")])
-    rows.append([InlineKeyboardButton(text="💬 Mijozga yozish", url=customer_link(customer))])
+    rows += _write_button(customer, channel_type)
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -84,8 +94,7 @@ def lead_keyboard(lead: Lead, customer: Customer, conv_id: int | None) -> Inline
     rows = []
     if lead.status == "new":
         rows.append([InlineKeyboardButton(text="✅ Bog'lanildi", callback_data=f"lead:c:{lead.id}")])
-    if lead.channel_type in ("tg_business", "tg_bot"):
-        rows.append([InlineKeyboardButton(text="💬 Mijozga yozish", url=customer_link(customer))])
+    rows += _write_button(customer, lead.channel_type)
     if conv_id:
         rows.append([InlineKeyboardButton(text="🤖 AI'ni qayta yoqish", callback_data=f"conv:ai:{conv_id}")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
@@ -122,9 +131,12 @@ class TelegramNotifier:
 
     async def new_order(self, order: Order, customer: Customer, channel: Channel) -> None:
         test = channel.type == "test"
-        self._pending.append((order_text(order, customer, test), order_keyboard(order, customer), order.location))
+        self._pending.append(
+            (order_text(order, customer, test), order_keyboard(order, customer, channel.type), order.location)
+        )
 
     async def handoff(self, conv: Conversation, customer: Customer, reason: str) -> None:
+        channel = await self.session.get(Channel, conv.channel_id)
         text = (
             f"🙋 <b>Mijoz menejerni kutmoqda</b>\n"
             f"Mijoz: {html.escape(customer.name or '-')}\n"
@@ -133,7 +145,7 @@ class TelegramNotifier:
         )
         markup = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="💬 Mijozga yozish", url=customer_link(customer))],
+                *_write_button(customer, channel.type if channel else "tg_business"),
                 [InlineKeyboardButton(text="🤖 AI'ni qayta yoqish", callback_data=f"conv:ai:{conv.id}")],
             ]
         )
