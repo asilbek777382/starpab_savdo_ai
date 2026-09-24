@@ -22,9 +22,10 @@ Asosiy tamoyil: **AI hech narsani o'ylab topmaydi.** Narx, qoldiq va yetkazib be
 | Xabarnomalar | Yangi buyurtma (Tasdiqlash/Bekor/Yuborildi), lid (operatorlar guruhiga), handoff |
 | Ishonchlilik | update_id dedup, debounce (2.5 s) + suhbat lock, rate limit, LLM fallback, telefonni maskalash |
 | Billing | 14 kunlik trial, tariflar va oylik suhbat limiti, token va xarajat hisobi |
-| REST API | Mini App uchun (Telegram `initData` HMAC autentifikatsiyasi) |
+| Web sayt | Landing (uz/ru) + boshqaruv paneli: telefon + parol bilan kirish, platforma admini |
+| REST API | Panel (cookie sessiya) va Telegram Mini App (`initData` HMAC) uchun |
 
-Keyingi bosqichlar: Instagram Direct, Mini App (React), Click/Payme avtomatik to'lov.
+Keyingi bosqichlar: Instagram Direct, Click/Payme avtomatik to'lov, SMS orqali telefonni tasdiqlash.
 
 ## Arxitektura
 
@@ -39,7 +40,9 @@ Mini App ──REST──▶ FastAPI ──▶ PostgreSQL
 ```
 
 Kod: `backend/app/` — `ai/` (agent, prompt, toollar, LLM), `services/` (katalog, qidiruv, savat, buyurtma, lid,
-limitlar), `telegram/` (handlerlar, xabarnomalar), `api/` (REST), `worker/` (arq).
+limitlar, auth), `telegram/` (handlerlar, xabarnomalar), `api/` (REST), `worker/` (arq).
+`web/` — landing (`index.html`, statik) va panel SPA (`app/`, React + Tailwind). `deploy/nginx.conf` — ikkalasini
+beradi va `/api`, `/tg` ni backend'ga proksi qiladi.
 
 ## Ishga tushirish
 
@@ -50,8 +53,17 @@ cp .env.example .env      # BOT_TOKEN, ANTHROPIC_API_KEY, PUBLIC_BASE_URL ni to'
 docker compose up -d --build
 ```
 
-`migrate` servisi `alembic upgrade head` qiladi, keyin `api` (8000-port) va `worker` ishga tushadi.
-`PUBLIC_BASE_URL` HTTPS bo'lishi kerak (Nginx + Let's Encrypt): API ishga tushganda Telegram webhook'ni o'zi o'rnatadi.
+`migrate` servisi `alembic upgrade head` qiladi, keyin `api`, `worker` va `web` (nginx, 80-port) ishga tushadi.
+Sayt: `http://<server>/` (landing), `http://<server>/app/` (panel).
+
+`PUBLIC_BASE_URL` HTTPS bo'lishi kerak: oldiga TLS qo'ying (masalan, Caddy yoki certbot bilan nginx) — API ishga
+tushganda Telegram webhook'ni o'zi o'rnatadi, sessiya cookie'si ham `Secure`.
+
+Birinchi platforma admini:
+
+```bash
+docker compose exec api python -m app.cli make-admin +998901234567
+```
 
 ### Lokal (dasturlash uchun)
 
@@ -59,8 +71,12 @@ docker compose up -d --build
 cd backend
 uv sync
 uv run alembic upgrade head
-uv run uvicorn app.main:app --reload         # API
-uv run arq app.worker.settings.WorkerSettings  # AI worker
+COOKIE_SECURE=false uv run uvicorn app.main:app --reload   # API (8000)
+uv run arq app.worker.settings.WorkerSettings              # AI worker
+
+cd web
+npm install
+npm run dev        # http://localhost:5173 (landing), /app/ (panel); /api → 8000 ga proksi
 ```
 
 PostgreSQL 16 da `vector` va `pg_trgm` kengaytmalari bo'lishi kerak (`pgvector/pgvector:pg16` image'ida bor).
@@ -83,20 +99,37 @@ Sotuvchi buyruqlari:
 | `/leads_here` | Operatorlar guruhida: lidlar shu guruhga keladi |
 | `/ai_on`, `/ai_off` | AI'ni yoqish/to'xtatish |
 
-## REST API (Mini App uchun)
+## Web panel
 
-Header: `Authorization: tma <Telegram.WebApp.initData>`. Bir nechta do'kon bo'lsa `X-Shop-Id` bilan tanlanadi.
-To'liq ro'yxat: `/docs`.
+Sotuvchi saytda **telefon + parol** bilan ro'yxatdan o'tadi (do'kon va 14 kunlik sinov yaratiladi). Panel bo'limlari:
+bosh sahifa (ishga tushirish ro'yxati, statistika, kunlik grafiklar), buyurtmalar, lidlar, suhbatlar (AI'ni to'xtatish),
+katalog (Excel import), AI sozlamalari (sotish/lid rejimi, vazifalar, qoidalar), do'kon ma'lumotlari (yetkazib berish
+hududlari), Telegram'ni ulash, test chat, profil. Platforma admini (`is_platform_admin`) `/app/admin` da barcha
+do'konlarni, tariflarni va qo'lda to'lovlarni boshqaradi.
 
-`/api/me`, `/api/shop`, `/api/settings` (FAQ, yetkazib berish hududlari, rejim, vazifalar, lid guruhi),
+Telegram bilan bog'lash: panelda "Telegram'ni ulash" → botda Start (xabarnomalar shu Telegram'ga keladi).
+Botda ro'yxatdan o'tgan sotuvchi botga `/web` yozadi — saytga bir martalik kirish havolasi keladi.
+
+## REST API
+
+Panel: httpOnly cookie sessiya (`/api/auth/*`). Telegram Mini App: `Authorization: tma <initData>`.
+Bir nechta do'kon bo'lsa `X-Shop-Id` bilan tanlanadi. To'liq ro'yxat: `/docs`.
+
+`/api/auth/*` (register, login, logout, me, password, telegram-link, magic), `/api/me`, `/api/shop`, `/api/channels`, `/api/settings` (FAQ, yetkazib berish hududlari, rejim, vazifalar, lid guruhi),
 `/api/categories`, `/api/products` (+ `/import`, `/api/products-import-template`), `/api/orders`,
-`/api/leads`, `/api/conversations` (+ `/{id}/ai` — "men o'zim javob beraman"), `/api/test-chat`, `/api/stats`.
+`/api/leads`, `/api/conversations` (+ `/{id}/ai` — "men o'zim javob beraman"), `/api/test-chat`, `/api/stats`
+(+ `/daily`), `/api/admin/*` (platforma admini).
 
 ## Testlar va sifat
 
 ```bash
 cd backend
 uv run ruff check . && uv run pytest    # Postgres (aiop_test bazasi) va Redis kerak
+
+cd web
+npm run typecheck && npm run build
+# E2E (backend 8000 va `npx vite preview` 4173 ishlab turganda):
+node e2e/panel.mjs http://localhost:4173 ./shots
 ```
 
 Testlar haqiqiy Postgres/Redis bilan ishlaydi. LLM va Telegram bot soxta (skriptlangan) obyektlar bilan
