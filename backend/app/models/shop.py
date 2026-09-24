@@ -65,3 +65,11 @@ class ShopSettings(Base):
     # {"silence_minutes": 30, "allow_discounts": false, "keywords": [...]}
     handoff_rules: Mapped[dict] = mapped_column(JSONB, default=dict)
     ai_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # sell — suhbatdan buyurtmagacha; lead — tanishtirib, telefon raqamini olib operatorga uzatish
+    ai_mode: Mapped[str] = mapped_column(String(20), default="sell")
+    # Sotuvchi AI'ga yozgan vazifalar/ssenariy (erkin matn)
+    ai_tasks: Mapped[str] = mapped_column(Text, default="")
+    # Lidlar yuboriladigan Telegram chat/guruh (bo'sh bo'lsa — do'kon xodimlariga)
+    lead_chat_id: Mapped[int | None] = mapped_column(BigInteger)
+    # Telefon olingandan keyin suhbatni operatorga o'tkazish
+    handoff_after_lead: Mapped[bool] = mapped_column(Boolean, default=True)

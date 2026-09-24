@@ -59,6 +59,7 @@ async def test_chat(
         status=result.status,
         replies=outbound.sent,
         order_number=result.order_number,
+        lead_id=result.lead_id,
         handed_off=result.handed_off,
         tools=result.tools,
     )

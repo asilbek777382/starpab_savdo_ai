@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import get_sessionmaker
-from app.models import Channel, Conversation, Customer, Message, Order, Shop, ShopSettings, ShopUser
+from app.models import Channel, Conversation, Customer, Lead, Message, Order, Shop, ShopSettings, ShopUser
 from app.runtime import get_runtime
 from app.services.ingest import (
     enqueue_reply,
@@ -201,12 +201,73 @@ async def on_status(message: TgMessage) -> None:
         f"Do'kon: {shop.name}",
         f"Tarif: {shop.plan}",
         f"AI: {'yoqilgan' if settings.ai_enabled else 'to‘xtatilgan'}",
+        f"Rejim: {MODE_NAMES.get(settings.ai_mode, settings.ai_mode)}",
+        f"Lidlar: {'operatorlar guruhiga' if settings.lead_chat_id else 'sizga'}",
         f"Business: {'ulangan' if business and business.is_enabled else 'ulanmagan'}"
         + (" (javob ruxsati yo'q!)" if business and not business.can_reply else ""),
         f"Bu oy suhbatlar: {usage.conversations if usage else 0}",
         f"Holat: {'ishlayapti' if ok else reason}",
     ]
     await message.answer("\n".join(lines))
+
+
+@router.message(Command("leads_here"))
+async def on_leads_here(message: TgMessage) -> None:
+    """Operatorlar guruhida yoziladi: shu guruh lidlar va operator xabarlari uchun belgilanadi."""
+    if message.chat.type not in ("group", "supergroup"):
+        await message.answer("Bu buyruqni operatorlar guruhida yozing (botni guruhga qo'shib).")
+        return
+    async with get_sessionmaker()() as session:
+        shops = [(shop, su) for shop, su in await shops_of_user(session, message.from_user.id) if su.role == "owner"]
+        if not shops:
+            await message.answer("Faqat do'kon egasi guruhni belgilay oladi.")
+            return
+        settings = await session.get(ShopSettings, shops[0][0].id)
+        settings.lead_chat_id = message.chat.id
+        await session.commit()
+    await message.answer(f"✅ Endi {shops[0][0].name} lidlari shu guruhga keladi.")
+
+
+MODE_NAMES = {"sell": "sotuvchi (buyurtmagacha)", "lead": "lid yig'ish (telefon → operator)"}
+
+
+@router.message(Command("mode"))
+async def on_mode(message: TgMessage, command: CommandObject) -> None:
+    mode = (command.args or "").strip().lower()
+    async with get_sessionmaker()() as session:
+        shops = await shops_of_user(session, message.from_user.id)
+        if not shops:
+            await message.answer("Sizda do'kon yo'q. /start bosing.")
+            return
+        settings = await session.get(ShopSettings, shops[0][0].id)
+        if mode not in MODE_NAMES:
+            await message.answer(
+                f"Hozirgi rejim: {MODE_NAMES.get(settings.ai_mode, settings.ai_mode)}\n"
+                "O'zgartirish: /mode sell yoki /mode lead"
+            )
+            return
+        settings.ai_mode = mode
+        await session.commit()
+    await message.answer(f"✅ AI rejimi: {MODE_NAMES[mode]}")
+
+
+@router.message(Command("tasks"))
+async def on_tasks(message: TgMessage, command: CommandObject) -> None:
+    """/tasks <matn> — AI uchun vazifalar/ssenariy. Argumentsiz — hozirgisini ko'rsatadi."""
+    async with get_sessionmaker()() as session:
+        shops = await shops_of_user(session, message.from_user.id)
+        if not shops:
+            await message.answer("Sizda do'kon yo'q. /start bosing.")
+            return
+        settings = await session.get(ShopSettings, shops[0][0].id)
+        if not command.args:
+            await message.answer(
+                "Hozirgi vazifalar:\n" + (settings.ai_tasks or "(yo'q)") + "\n\nO'zgartirish: /tasks <matn>"
+            )
+            return
+        settings.ai_tasks = command.args.strip()[:4000]
+        await session.commit()
+    await message.answer("✅ Vazifalar saqlandi. AI keyingi xabardan boshlab shunga amal qiladi.")
 
 
 @router.message(F.chat.type == "private")
@@ -244,6 +305,14 @@ async def _is_shop_member(session, shop_id: int, tg_user_id: int) -> bool:
             select(ShopUser.id).where(ShopUser.shop_id == shop_id, ShopUser.telegram_user_id == tg_user_id)
         )
     )
+
+
+async def _can_manage(session, shop_id: int, call: CallbackQuery) -> bool:
+    """Do'kon xodimi yoki do'konning operatorlar guruhidagi a'zo."""
+    if await _is_shop_member(session, shop_id, call.from_user.id):
+        return True
+    settings = await session.get(ShopSettings, shop_id)
+    return bool(settings and settings.lead_chat_id and call.message and call.message.chat.id == settings.lead_chat_id)
 
 
 ORDER_ACTIONS = {"c": "confirmed", "x": "cancelled", "s": "shipped"}
@@ -300,7 +369,7 @@ async def on_resume_ai(call: CallbackQuery) -> None:
     conv_id = int(call.data.split(":")[2])
     async with get_sessionmaker()() as session:
         conv = await session.get(Conversation, conv_id)
-        if conv is None or not await _is_shop_member(session, conv.shop_id, call.from_user.id):
+        if conv is None or not await _can_manage(session, conv.shop_id, call):
             await call.answer("Ruxsat yo'q", show_alert=True)
             return
         conv.status = "ai"
@@ -309,3 +378,21 @@ async def on_resume_ai(call: CallbackQuery) -> None:
             conv.stage = "discovery"
         await session.commit()
     await call.answer("AI qayta yoqildi")
+
+
+@router.callback_query(F.data.startswith("lead:c:"))
+async def on_lead_contacted(call: CallbackQuery) -> None:
+    lead_id = int(call.data.split(":")[2])
+    async with get_sessionmaker()() as session:
+        lead = await session.get(Lead, lead_id)
+        if lead is None or not await _can_manage(session, lead.shop_id, call):
+            await call.answer("Ruxsat yo'q", show_alert=True)
+            return
+        lead.status = "contacted"
+        await session.commit()
+        who = call.from_user.full_name
+    try:
+        await call.message.edit_text((call.message.html_text or "") + f"\n\n✅ Bog'lanildi: {who}", parse_mode="HTML")
+    except Exception:  # noqa: BLE001
+        log.debug("Xabar tahrirlanmadi", exc_info=True)
+    await call.answer("Saqlandi")

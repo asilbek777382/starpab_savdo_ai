@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from aiogram import Bot, Dispatcher
 
 from app.telegram.handlers import router
@@ -12,7 +14,9 @@ ALLOWED_UPDATES = [
 ]
 
 
+@lru_cache
 def build_dispatcher() -> Dispatcher:
+    """Router faqat bitta dispatcher'ga ulanadi, shuning uchun yagona nusxa."""
     dp = Dispatcher()
     dp.include_router(router)
     return dp

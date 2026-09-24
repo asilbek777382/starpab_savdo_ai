@@ -77,3 +77,23 @@ class FakeBot(Bot):
 
     def sent(self, kind=SendMessage) -> list:
         return [c for c in self.calls if isinstance(c, kind)]
+
+
+class RecordingNotifier:
+    def __init__(self) -> None:
+        self.orders: list = []
+        self.handoffs: list = []
+        self.leads: list = []
+        self.flushed = 0
+
+    async def new_order(self, order, customer, channel) -> None:  # noqa: ANN001
+        self.orders.append(order)
+
+    async def handoff(self, conv, customer, reason) -> None:  # noqa: ANN001
+        self.handoffs.append(reason)
+
+    async def new_lead(self, lead, customer, conv) -> None:  # noqa: ANN001
+        self.leads.append(lead)
+
+    async def flush(self) -> None:
+        self.flushed += 1

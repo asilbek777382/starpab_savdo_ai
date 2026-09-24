@@ -124,14 +124,15 @@ async def update_product(
     user: CurrentUser = Depends(current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    product = await load_product(session, user.shop.id, product_id)
+    shop_id = user.shop.id
+    product = await load_product(session, shop_id, product_id)
     if product is None:
         raise HTTPException(404)
     await _save(session, user, body, product)
     await session.commit()
     await _enqueue_enrich([product_id])
-    session.expire_all()
-    return ProductOut.model_validate(await load_product(session, user.shop.id, product_id))
+    session.expire_all()  # yangi variant/rasm ro'yxatini bazadan qayta o'qish uchun
+    return ProductOut.model_validate(await load_product(session, shop_id, product_id))
 
 
 @router.delete("/products/{product_id}", status_code=204)

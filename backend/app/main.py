@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from redis.asyncio import Redis
 
 from app.ai.llm.factory import build_llm
-from app.api import catalog, conversations, orders, shops, stats, telegram_webhook, test_chat
+from app.api import catalog, conversations, leads, orders, shops, stats, telegram_webhook, test_chat
 from app.config import get_settings
 from app.runtime import Runtime, set_runtime
 from app.services.embeddings import get_embedding_provider
@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(title="AI Operator", version="0.1.0", lifespan=lifespan)
-    for module in (telegram_webhook, shops, catalog, orders, conversations, test_chat, stats):
+    for module in (telegram_webhook, shops, catalog, orders, leads, conversations, test_chat, stats):
         app.include_router(module.router)
 
     @app.get("/health", tags=["system"])

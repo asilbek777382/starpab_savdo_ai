@@ -32,6 +32,7 @@ class ReplyResult:
     status: str
     text: str = ""
     order_number: int | None = None
+    lead_id: int | None = None
     handed_off: bool = False
     tools: list[dict] = field(default_factory=list)
 
@@ -198,6 +199,7 @@ async def reply_to_conversation(
         "llm_failed" if result.llm_failed else "replied",
         text=result.text,
         order_number=ctx.order.number if ctx.order else None,
+        lead_id=ctx.lead.id if ctx.lead else None,
         handed_off=ctx.handed_off,
         tools=ctx.tool_log,
     )

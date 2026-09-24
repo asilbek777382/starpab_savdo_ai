@@ -11,6 +11,7 @@ from app.services import cart as cart_svc
 from app.services.catalog import load_product
 from app.services.delivery import delivery_info
 from app.services.handoff import handoff_event, mark_handoff
+from app.services.leads import save_lead
 from app.services.orders import OrderError, create_order
 from app.services.search import product_card, search_products
 
@@ -52,6 +53,13 @@ class CreateOrderIn(BaseModel):
     address: str = Field(default="", max_length=500)
     comment: str | None = Field(default=None, max_length=500)
     customer_confirmed: bool
+
+
+class SaveLeadIn(BaseModel):
+    phone: str = Field(min_length=1, max_length=40)
+    name: str | None = Field(default=None, max_length=200)
+    interest: str = Field(default="", max_length=500)
+    note: str | None = Field(default=None, max_length=500)
 
 
 class HandoffIn(BaseModel):
@@ -132,6 +140,21 @@ TOOLS: list[dict] = [
                 "customer_confirmed": {"type": "boolean", "description": "Mijoz aniq tasdiqladimi"},
             },
             "required": ["name", "phone", "address", "customer_confirmed"],
+        },
+    },
+    {
+        "name": "save_lead",
+        "description": "Mijozning telefon raqamini va nimaga qiziqqanini saqlab, operatorga (sotuvchining "
+        "Telegram'iga) yuboradi. Mijoz raqamini bergan zahoti chaqir.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "phone": {"type": "string", "description": "Telefon yoki [PHONE_1] kabi belgi"},
+                "name": {"type": "string"},
+                "interest": {"type": "string", "description": "Mijoz nimaga qiziqdi (mahsulot, savol)"},
+                "note": {"type": "string", "description": "Operator uchun qo'shimcha izoh"},
+            },
+            "required": ["phone", "interest"],
         },
     },
     {
@@ -233,6 +256,30 @@ async def _create_order(ctx: TurnContext, a: CreateOrderIn) -> dict:
     }
 
 
+async def _save_lead(ctx: TurnContext, a: SaveLeadIn) -> dict:
+    phone = ctx.masker.unmask(a.phone)
+    if not phone:
+        return {"error": "Telefon raqam noto'g'ri. Mijozdan +998 XX XXX XX XX ko'rinishida so'ra"}
+    lead, created = await save_lead(
+        ctx.session,
+        conv=ctx.conv,
+        customer=ctx.customer,
+        channel=ctx.channel,
+        settings=ctx.settings,
+        phone=phone,
+        name=a.name,
+        interest=a.interest,
+        note=a.note,
+    )
+    ctx.lead = lead
+    if created:
+        await ctx.notifier.new_lead(lead, ctx.customer, ctx.conv)
+    if ctx.settings.handoff_after_lead:
+        ctx.handed_off = True
+        return {"ok": True, "note": "Mijozga rahmat ayt: operator tez orada shu raqamga bog'lanadi."}
+    return {"ok": True, "note": "Raqam operatorga yuborildi. Suhbatni davom ettir."}
+
+
 async def _handoff(ctx: TurnContext, a: HandoffIn) -> dict:
     if not ctx.handed_off:
         mark_handoff(ctx.conv, ctx.settings)
@@ -249,14 +296,24 @@ HANDLERS = {
     "update_cart": (UpdateCartIn, _update_cart),
     "get_delivery_info": (DeliveryIn, _delivery),
     "create_order": (CreateOrderIn, _create_order),
+    "save_lead": (SaveLeadIn, _save_lead),
     "handoff_to_human": (HandoffIn, _handoff),
 }
+
+# Lid rejimida savat va buyurtma toollari berilmaydi
+LEAD_MODE_EXCLUDED = {"update_cart", "create_order"}
+
+
+def tools_for_mode(mode: str) -> list[dict]:
+    if mode == "lead":
+        return [t for t in TOOLS if t["name"] not in LEAD_MODE_EXCLUDED]
+    return TOOLS
 
 
 async def execute_tool(ctx: TurnContext, name: str, raw_input: dict) -> tuple[str, bool]:
     """Qaytaradi: (tool_result matni JSON, is_error)."""
     entry = HANDLERS.get(name)
-    if entry is None:
+    if entry is None or (ctx.settings.ai_mode == "lead" and name in LEAD_MODE_EXCLUDED):
         return json.dumps({"error": f"Noma'lum tool: {name}"}), True
     model, handler = entry
     try:

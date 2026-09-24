@@ -2,7 +2,7 @@
 
 Revision ID: 0001
 Revises:
-Create Date: 2026-09-24 04:15:16.211338
+Create Date: 2026-09-24 04:32:20.170488
 """
 
 from collections.abc import Sequence
@@ -91,6 +91,10 @@ def upgrade() -> None:
         sa.Column("tone", sa.String(length=50), nullable=False),
         sa.Column("handoff_rules", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("ai_enabled", sa.Boolean(), nullable=False),
+        sa.Column("ai_mode", sa.String(length=20), nullable=False),
+        sa.Column("ai_tasks", sa.Text(), nullable=False),
+        sa.Column("lead_chat_id", sa.BigInteger(), nullable=True),
+        sa.Column("handoff_after_lead", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(["shop_id"], ["shops.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("shop_id"),
     )
@@ -239,6 +243,27 @@ def upgrade() -> None:
     op.create_index(op.f("ix_product_variants_product_id"), "product_variants", ["product_id"], unique=False)
     op.create_index(op.f("ix_product_variants_shop_id"), "product_variants", ["shop_id"], unique=False)
     op.create_table(
+        "leads",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("shop_id", sa.Integer(), nullable=False),
+        sa.Column("customer_id", sa.Integer(), nullable=False),
+        sa.Column("conversation_id", sa.Integer(), nullable=True),
+        sa.Column("channel_type", sa.String(length=20), nullable=False),
+        sa.Column("name", sa.String(length=200), nullable=True),
+        sa.Column("phone", sa.String(length=30), nullable=False),
+        sa.Column("interest", sa.Text(), nullable=False),
+        sa.Column("note", sa.Text(), nullable=True),
+        sa.Column("status", sa.String(length=20), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.ForeignKeyConstraint(["conversation_id"], ["conversations.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["customer_id"], ["customers.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["shop_id"], ["shops.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_leads_customer_id"), "leads", ["customer_id"], unique=False)
+    op.create_index(op.f("ix_leads_shop_id"), "leads", ["shop_id"], unique=False)
+    op.create_table(
         "messages",
         sa.Column("id", sa.BigInteger(), nullable=False),
         sa.Column("shop_id", sa.Integer(), nullable=False),
@@ -297,6 +322,9 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_messages_shop_id"), table_name="messages")
     op.drop_index("ix_messages_conversation_created", table_name="messages")
     op.drop_table("messages")
+    op.drop_index(op.f("ix_leads_shop_id"), table_name="leads")
+    op.drop_index(op.f("ix_leads_customer_id"), table_name="leads")
+    op.drop_table("leads")
     op.drop_index(op.f("ix_product_variants_shop_id"), table_name="product_variants")
     op.drop_index(op.f("ix_product_variants_product_id"), table_name="product_variants")
     op.drop_table("product_variants")

@@ -5,10 +5,15 @@ ONBOARDING = (
     "2. Telegram Business'ga ulang: Sozlamalar → Telegram Business → Chatbots → <code>@{bot}</code>. "
     '"Xabarlarga javob berish" ruxsatini yoqing.\n'
     "3. Business'siz ishlash uchun mijozlarga havola bering: {link}\n\n"
-    "Buyruqlar: /status — holat, /ai_off — AI'ni to'xtatish, /ai_on — yoqish, /help — yordam."
+    "Buyruqlar: /status — holat, /mode — AI rejimi (sotish yoki lid yig'ish), /tasks — AI vazifalari, "
+    "/ai_off — AI'ni to'xtatish, /ai_on — yoqish, /help — yordam."
 )
 HELP = (
-    "Buyruqlar:\n/status — do'kon holati\n/ai_on — AI'ni yoqish\n/ai_off — AI'ni to'xtatish\n\n"
+    "Buyruqlar:\n/status — do'kon holati\n"
+    "/mode sell — AI buyurtmagacha sotadi\n/mode lead — AI tanishtiradi, telefon raqamini olib operatorga beradi\n"
+    "/tasks <matn> — AI uchun vazifalar (ssenariy)\n"
+    "/leads_here — operatorlar guruhida yozing: lidlar shu guruhga keladi\n"
+    "/ai_on — AI'ni yoqish\n/ai_off — AI'ni to'xtatish\n\n"
     "Sotuvchi o'zi mijozga yozsa, AI shu suhbatda 30 daqiqa jim turadi."
 )
 CUSTOMER_WELCOME = "Assalomu alaykum! {shop} do'koniga xush kelibsiz. Savolingizni yozing."

@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 from app.ai.context import load_history, maybe_summarize, to_llm_messages
 from app.ai.llm.base import LLMClient, LLMUnavailable, Usage
 from app.ai.prompt import build_state_note, build_system_prompt, fmt_sum
-from app.ai.tools import TOOLS, execute_tool
+from app.ai.tools import execute_tool, tools_for_mode
 from app.ai.turn import TurnContext
 from app.config import get_settings
 from app.models import Message, Product
@@ -70,11 +70,12 @@ async def run_turn(ctx: TurnContext, llm: LLMClient, upto_id: int | None = None)
     messages[-1]["content"].append({"type": "text", "text": state})
     system = build_system_prompt(ctx.shop, ctx.settings, await catalog_lines(ctx))
 
+    tools = tools_for_mode(ctx.settings.ai_mode)
     usage = Usage()
     text = ""
     try:
         for _ in range(s.llm_max_tool_iterations):
-            resp = await llm.chat(system=system, messages=messages, tools=TOOLS)
+            resp = await llm.chat(system=system, messages=messages, tools=tools)
             usage += resp.usage
             if resp.stop_reason != "tool_use" or not resp.tool_calls:
                 text = resp.text

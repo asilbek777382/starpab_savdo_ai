@@ -4,7 +4,7 @@ from typing import Protocol
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.masking import PhoneMasker
-from app.models import Channel, Conversation, Customer, Order, Shop, ShopSettings
+from app.models import Channel, Conversation, Customer, Lead, Order, Shop, ShopSettings
 from app.services.embeddings import EmbeddingProvider
 from app.telegram.outbound import Outbound
 
@@ -14,6 +14,8 @@ class Notifier(Protocol):
 
     async def handoff(self, conv: Conversation, customer: Customer, reason: str) -> None: ...
 
+    async def new_lead(self, lead: Lead, customer: Customer, conv: Conversation) -> None: ...
+
     async def flush(self) -> None: ...
 
 
@@ -22,6 +24,9 @@ class NullNotifier:
         return None
 
     async def handoff(self, conv: Conversation, customer: Customer, reason: str) -> None:
+        return None
+
+    async def new_lead(self, lead: Lead, customer: Customer, conv: Conversation) -> None:
         return None
 
     async def flush(self) -> None:
@@ -44,4 +49,5 @@ class TurnContext:
     # Turn natijalari
     handed_off: bool = False
     order: Order | None = None
+    lead: Lead | None = None
     tool_log: list[dict] = field(default_factory=list)

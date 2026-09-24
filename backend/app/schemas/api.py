@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
@@ -57,6 +58,10 @@ class SettingsIO(ORM):
     tone: str = "friendly"
     handoff_rules: HandoffRules = HandoffRules()
     ai_enabled: bool = True
+    ai_mode: Literal["sell", "lead"] = "sell"
+    ai_tasks: str = Field(default="", max_length=4000)
+    lead_chat_id: int | None = None
+    handoff_after_lead: bool = True
 
 
 class CategoryIn(BaseModel):
@@ -167,8 +172,26 @@ class TestChatOut(BaseModel):
     status: str
     replies: list[dict]
     order_number: int | None
+    lead_id: int | None = None
     handed_off: bool
     tools: list[dict]
+
+
+class LeadOut(ORM):
+    id: int
+    customer_id: int
+    conversation_id: int | None
+    channel_type: str
+    name: str | None
+    phone: str
+    interest: str
+    note: str | None
+    status: str
+    created_at: datetime
+
+
+class LeadStatusIn(BaseModel):
+    status: Literal["new", "contacted", "won", "lost"]
 
 
 class StatsOut(BaseModel):
@@ -178,6 +201,7 @@ class StatsOut(BaseModel):
     conversion: float
     ai_orders_revenue: int
     handoffs: int
+    leads: int
     ai_cost: Decimal
     month_conversations: int
     month_limit: int

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, current_user
 from app.db import get_session
-from app.models import PLANS, Channel, Conversation, Message, Order
+from app.models import PLANS, Channel, Conversation, Lead, Message, Order
 from app.schemas.api import StatsOut
 from app.services.handoff import HANDOFF_EVENT_PREFIX
 from app.services.usage import current_usage
@@ -47,6 +47,11 @@ async def stats(
             Message.created_at >= since,
         )
     )
+    leads = await session.scalar(
+        select(func.count())
+        .select_from(Lead)
+        .where(Lead.shop_id == shop_id, Lead.created_at >= since, Lead.channel_type != "test")
+    )
     cost = await session.scalar(
         select(func.coalesce(func.sum(Message.cost), 0)).where(Message.shop_id == shop_id, Message.created_at >= since)
     )
@@ -59,6 +64,7 @@ async def stats(
         conversion=round((orders or 0) / conversations, 4) if conversations else 0.0,
         ai_orders_revenue=int(revenue or 0),
         handoffs=int(handoffs or 0),
+        leads=int(leads or 0),
         ai_cost=Decimal(cost or 0),
         month_conversations=usage.conversations if usage else 0,
         month_limit=PLANS.get(user.shop.plan, PLANS["start"])["conversations"] + (user.shop.extra_conversations or 0),
