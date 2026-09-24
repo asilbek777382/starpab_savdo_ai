@@ -142,6 +142,7 @@ class ConversationOut(ORM):
     id: int
     customer_id: int
     customer_name: str | None = None
+    channel_type: str | None = None
     status: str
     stage: str
     human_until: datetime | None

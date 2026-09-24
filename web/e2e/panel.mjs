@@ -93,8 +93,11 @@ await nav("Lidlar");
 await page.getByRole("heading", { name: "Lidlar" }).waitFor();
 await nav("Ulash");
 await page.getByText("shop_").first().waitFor();
+await page.getByRole("button", { name: /Instagram'ni ulash/ }).waitFor();
 await shot("connect");
-step("conversations / orders / leads / connect pages");
+await page.goto(base + "/app/connect?instagram=ok");
+await page.getByRole("status").getByText("Instagram muvaffaqiyatli ulandi").waitFor();
+step("conversations / orders / leads / connect pages (+ Instagram card)");
 
 // 7. Dashboard (grafik) va rus tili
 await nav("Bosh sahifa");

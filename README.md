@@ -12,7 +12,7 @@ Asosiy tamoyil: **AI hech narsani o'ylab topmaydi.** Narx, qoldiq va yetkazib be
 
 | Qism | Tavsif |
 |---|---|
-| Kanallar | Telegram Business (do'kon akkauntidan javob), oddiy bot rejimi (`t.me/<bot>?start=shop_<id>`) |
+| Kanallar | Telegram Business (do'kon akkauntidan javob), oddiy bot rejimi (`t.me/<bot>?start=shop_<id>`), Instagram Direct |
 | AI | Claude, tool calling: `search_products`, `get_product`, `send_product_photos`, `update_cart`, `get_delivery_info`, `create_order`, `save_lead`, `handoff_to_human` |
 | AI rejimlari | **sell** — suhbatdan buyurtmagacha; **lead** — tanishtiradi, telefon raqamini so'raydi, operatorga yuboradi |
 | Vazifalar | Sotuvchi AI'ga erkin matnda ssenariy yozadi (`/tasks` yoki API) |
@@ -25,7 +25,7 @@ Asosiy tamoyil: **AI hech narsani o'ylab topmaydi.** Narx, qoldiq va yetkazib be
 | Web sayt | Landing (uz/ru) + boshqaruv paneli: telefon + parol bilan kirish, platforma admini |
 | REST API | Panel (cookie sessiya) va Telegram Mini App (`initData` HMAC) uchun |
 
-Keyingi bosqichlar: Instagram Direct, Click/Payme avtomatik to'lov, SMS orqali telefonni tasdiqlash.
+Keyingi bosqichlar: Click/Payme avtomatik to'lov, SMS orqali telefonni tasdiqlash, WhatsApp.
 
 ## Arxitektura
 
@@ -114,6 +114,27 @@ Sotuvchi buyruqlari:
 | `/leads_here` | Operatorlar guruhida: lidlar shu guruhga keladi |
 | `/ai_on`, `/ai_off` | AI'ni yoqish/to'xtatish |
 
+## Instagram sozlash
+
+Instagram Direct **Instagram API with Instagram Login** orqali ishlaydi (Facebook sahifa shart emas). Webhook uchun
+**HTTPS domen kerak** — polling rejimi Instagram uchun yo'q.
+
+1. [developers.facebook.com](https://developers.facebook.com) da ilova yarating (Business turi) va **Instagram** mahsulotini
+   qo'shing → "API setup with Instagram login".
+2. **Business login settings**: OAuth redirect URI — `https://<domen>/api/instagram/callback`.
+3. **Webhooks**: Callback URL — `https://<domen>/ig/webhook`, Verify token — `.env` dagi `IG_VERIFY_TOKEN`;
+   `messages` maydoniga obuna bo'ling.
+4. `.env`: `IG_APP_ID`, `IG_APP_SECRET`, `IG_VERIFY_TOKEN`; `PUBLIC_BASE_URL=https://<domen>`.
+5. Ruxsatlar: `instagram_business_basic`, `instagram_business_manage_messages`. App Review'dan oldin faqat ilovaga
+   **Instagram tester** sifatida qo'shilgan akkauntlar ulana oladi; boshqa do'konlar uchun Advanced Access (App Review,
+   screencast) kerak — arizani ertaroq topshiring.
+
+Sotuvchi tomoni: Instagram ilovasida Sozlamalar → Xabarlar → Ulangan vositalar → "Xabarlarga ruxsat berish" ni yoqadi,
+so'ng panelda **Ulash → Instagram'ni ulash**. Token shifrlangan holda saqlanadi va har kuni (worker cron) muddati
+yaqinlashganda yangilanadi. Instagram qoidasi: mijozning oxirgi xabaridan keyin **24 soat** ichida yozish mumkin —
+buyurtma holati xabarlari ham shu oyna ichida yuboriladi. Sotuvchi Instagram'dan o'zi javob yozsa, AI shu suhbatda
+jim turadi. Instagram Biznes va Pro tariflarida (va bepul sinovda) ochiq.
+
 ## Web panel
 
 Sotuvchi saytda **telefon + parol** bilan ro'yxatdan o'tadi (do'kon va 14 kunlik sinov yaratiladi). Panel bo'limlari:
@@ -130,7 +151,8 @@ Botda ro'yxatdan o'tgan sotuvchi botga `/web` yozadi — saytga bir martalik kir
 Panel: httpOnly cookie sessiya (`/api/auth/*`). Telegram Mini App: `Authorization: tma <initData>`.
 Bir nechta do'kon bo'lsa `X-Shop-Id` bilan tanlanadi. To'liq ro'yxat: `/docs`.
 
-`/api/auth/*` (register, login, logout, me, password, telegram-link, magic), `/api/me`, `/api/shop`, `/api/channels`, `/api/settings` (FAQ, yetkazib berish hududlari, rejim, vazifalar, lid guruhi),
+`/api/auth/*` (register, login, logout, me, password, telegram-link, magic), `/api/instagram/*` (connect, callback,
+disconnect), `/api/me`, `/api/shop`, `/api/channels`, `/api/settings` (FAQ, yetkazib berish hududlari, rejim, vazifalar, lid guruhi),
 `/api/categories`, `/api/products` (+ `/import`, `/api/products-import-template`), `/api/orders`,
 `/api/leads`, `/api/conversations` (+ `/{id}/ai` — "men o'zim javob beraman"), `/api/test-chat`, `/api/stats`
 (+ `/daily`), `/api/admin/*` (platforma admini).

@@ -155,7 +155,7 @@ export function AdminPage() {
         <Loading />
       ) : shops.data?.length ? (
         <Card flush className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-sm">
+          <table className="w-full min-w-[900px] text-sm">
             <thead className="border-b border-slate-100 text-left text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-medium">{t("admin.shops")}</th>
@@ -165,6 +165,7 @@ export function AdminPage() {
                 <th className="px-4 py-3 text-right font-medium">{t("admin.usage")}</th>
                 <th className="px-4 py-3 text-right font-medium">{t("dash.ai_orders")}</th>
                 <th className="px-4 py-3 font-medium">{t("admin.business")}</th>
+                <th className="px-4 py-3 font-medium">{t("admin.instagram")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -184,6 +185,7 @@ export function AdminPage() {
                   <td className="px-4 py-3 text-right tabular-nums">{s.month_conversations}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{s.orders_30d}</td>
                   <td className="px-4 py-3">{s.business_connected ? "✓" : "—"}</td>
+                  <td className="px-4 py-3">{s.instagram_connected ? "✓" : "—"}</td>
                 </tr>
               ))}
             </tbody>

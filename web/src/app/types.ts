@@ -128,6 +128,7 @@ export interface Conversation {
   id: number;
   customer_id: number;
   customer_name: string | null;
+  channel_type: string | null;
   status: "ai" | "human" | "closed";
   stage: string;
   human_until: string | null;
@@ -164,11 +165,23 @@ export interface DailyPoint {
   leads: number;
 }
 
+export interface ChannelInfo {
+  id: number;
+  type: string;
+  can_reply: boolean;
+  is_enabled: boolean;
+  display_name: string | null;
+  token_expires_at: string | null;
+}
+
 export interface Channels {
-  channels: { id: number; type: string; can_reply: boolean; is_enabled: boolean }[];
+  channels: ChannelInfo[];
   bot_username: string;
   bot_link: string;
   business_connected: boolean;
+  instagram_configured: boolean;
+  instagram_allowed: boolean;
+  instagram: ChannelInfo | null;
 }
 
 export interface TestChatResult {
@@ -194,6 +207,7 @@ export interface AdminShopRow {
   orders_30d: number;
   leads_30d: number;
   business_connected: boolean;
+  instagram_connected: boolean;
   created_at: string;
 }
 

@@ -177,7 +177,7 @@ export const uz = {
   "shop.zone_eta": "Muddat",
   "shop.add_zone": "Hudud qo'shish",
 
-  "connect.title": "Telegram'ga ulash",
+  "connect.title": "Kanallarni ulash",
   "connect.account": "1. Telegram akkauntingiz",
   "connect.account_hint": "Buyurtma, lid va ogohlantirishlar shu Telegram'ga keladi.",
   "connect.linked": "Ulangan",
@@ -190,6 +190,19 @@ export const uz = {
   "connect.bot": "3. Business'siz: do'kon havolasi",
   "connect.bot_hint": "Bu havolani Instagram bio, sayt yoki reklamaga qo'ying — mijoz botda AI bilan gaplashadi.",
   "connect.refresh": "Holatni yangilash",
+  "connect.instagram": "4. Instagram Direct",
+  "connect.ig_hint": "Instagram professional (Business yoki Creator) akkauntingizni ulang — AI Direct xabarlarga javob beradi.",
+  "connect.ig_btn": "Instagram'ni ulash",
+  "connect.ig_connected": "Ulangan: {name}",
+  "connect.ig_expires": "Ruxsat muddati: {date} (avtomatik yangilanadi)",
+  "connect.ig_disconnect": "Uzish",
+  "connect.ig_steps": "Oldin Instagram ilovasida: Sozlamalar → Xabarlar va javoblar → Ulangan vositalar → \"Xabarlarga ruxsat berish\" ni yoqing.",
+  "connect.ig_window": "Instagram qoidasi: mijozning oxirgi xabaridan keyin 24 soat ichida javob berish mumkin.",
+  "connect.ig_not_configured": "Instagram ulanishi hali sozlanmagan. Platforma administratoriga murojaat qiling.",
+  "connect.ig_plan": "Instagram Biznes tarifidan boshlab ulanadi.",
+  "connect.ig_ok": "✅ Instagram muvaffaqiyatli ulandi",
+  "connect.ig_error": "Instagram ulanmadi. Qayta urinib ko'ring.",
+  "connect.ig_taken": "Bu Instagram akkaunt boshqa do'konga ulangan.",
 
   "test.title": "Test chat",
   "test.subtitle": "O'zingiz mijoz bo'lib yozing — AI qanday javob berishini ko'ring. Test buyurtmalar statistikaga kirmaydi.",
@@ -230,6 +243,7 @@ export const uz = {
   "admin.activate": "Faollashtirish",
   "admin.payments": "To'lovlar",
   "admin.business": "Business",
+  "admin.instagram": "Instagram",
 } as const;
 
 export type MessageKey = keyof typeof uz;
@@ -412,7 +426,7 @@ export const ru: Record<MessageKey, string> = {
   "shop.zone_eta": "Срок",
   "shop.add_zone": "Добавить зону",
 
-  "connect.title": "Подключение Telegram",
+  "connect.title": "Подключение каналов",
   "connect.account": "1. Ваш Telegram",
   "connect.account_hint": "Сюда приходят заказы, заявки и уведомления.",
   "connect.linked": "Подключён",
@@ -425,6 +439,19 @@ export const ru: Record<MessageKey, string> = {
   "connect.bot": "3. Без Business: ссылка магазина",
   "connect.bot_hint": "Разместите ссылку в био Instagram, на сайте или в рекламе — клиент общается с AI в боте.",
   "connect.refresh": "Обновить статус",
+  "connect.instagram": "4. Instagram Direct",
+  "connect.ig_hint": "Подключите профессиональный аккаунт Instagram (Business или Creator) — AI будет отвечать в Direct.",
+  "connect.ig_btn": "Подключить Instagram",
+  "connect.ig_connected": "Подключён: {name}",
+  "connect.ig_expires": "Доступ до: {date} (продлевается автоматически)",
+  "connect.ig_disconnect": "Отключить",
+  "connect.ig_steps": "Сначала в приложении Instagram: Настройки → Сообщения и ответы на истории → Подключённые инструменты → включите «Разрешить доступ к сообщениям».",
+  "connect.ig_window": "Правило Instagram: отвечать клиенту можно в течение 24 часов после его последнего сообщения.",
+  "connect.ig_not_configured": "Подключение Instagram ещё не настроено. Обратитесь к администратору платформы.",
+  "connect.ig_plan": "Instagram доступен с тарифа «Бизнес».",
+  "connect.ig_ok": "✅ Instagram успешно подключён",
+  "connect.ig_error": "Не удалось подключить Instagram. Попробуйте ещё раз.",
+  "connect.ig_taken": "Этот аккаунт Instagram уже подключён к другому магазину.",
 
   "test.title": "Тестовый чат",
   "test.subtitle": "Напишите как клиент — посмотрите, как отвечает AI. Тестовые заказы не попадают в статистику.",
@@ -465,4 +492,5 @@ export const ru: Record<MessageKey, string> = {
   "admin.activate": "Активировать",
   "admin.payments": "Платежи",
   "admin.business": "Business",
+  "admin.instagram": "Instagram",
 };

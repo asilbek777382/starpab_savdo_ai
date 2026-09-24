@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { get, post } from "../api";
+import { useSearchParams } from "react-router-dom";
+import { del, get, post } from "../api";
 import { useMe } from "../auth";
 import { useI18n } from "../i18n";
 import type { Channels } from "../types";
@@ -29,8 +30,59 @@ export function CopyButton({ text }: { text: string }) {
   );
 }
 
+function InstagramCard({ ch }: { ch: Channels }) {
+  const { t, date } = useI18n();
+  const qc = useQueryClient();
+  const connect = useMutation({
+    mutationFn: () => post<{ url: string }>("/api/instagram/connect"),
+    onSuccess: (r) => {
+      window.location.href = r.url;
+    },
+  });
+  const disconnect = useMutation({
+    mutationFn: () => del("/api/instagram"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["channels"] }),
+  });
+  const ig = ch.instagram;
+  return (
+    <Card title={t("connect.instagram")} actions={ig && <Badge tone="green">✓ {t("connect.ig_connected", { name: ig.display_name ?? "Instagram" })}</Badge>}>
+      <p className="text-sm text-slate-600">{t("connect.ig_hint")}</p>
+      <ErrorBox error={connect.error ?? disconnect.error} />
+      {ig ? (
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {ig.token_expires_at && <span className="text-sm text-slate-500">{t("connect.ig_expires", { date: date(ig.token_expires_at, false) })}</span>}
+          <Button size="sm" variant="danger" onClick={() => disconnect.mutate()} loading={disconnect.isPending}>
+            {t("connect.ig_disconnect")}
+          </Button>
+        </div>
+      ) : !ch.instagram_configured ? (
+        <p className="mt-3 text-sm text-amber-800">{t("connect.ig_not_configured")}</p>
+      ) : !ch.instagram_allowed ? (
+        <p className="mt-3 text-sm text-amber-800">{t("connect.ig_plan")}</p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-relaxed text-slate-600">{t("connect.ig_steps")}</p>
+          <button
+            type="button"
+            onClick={() => connect.mutate()}
+            disabled={connect.isPending}
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+          >
+            📸 {t("connect.ig_btn")}
+          </button>
+        </div>
+      )}
+      <p className="mt-4 text-xs text-slate-500">{t("connect.ig_window")}</p>
+    </Card>
+  );
+}
+
+const IG_RESULT = { ok: "connect.ig_ok", error: "connect.ig_error", taken: "connect.ig_taken" } as const;
+
 export function ConnectPage() {
   const { t } = useI18n();
+  const [params] = useSearchParams();
+  const igResult = params.get("instagram") as keyof typeof IG_RESULT | null;
   const qc = useQueryClient();
   const { data: me } = useMe();
   const channels = useQuery({ queryKey: ["channels"], queryFn: () => get<Channels>("/api/channels") });
@@ -51,6 +103,18 @@ export function ConnectPage() {
         }
       />
       <ErrorBox error={channels.error ?? link.error} />
+      {igResult && IG_RESULT[igResult] && (
+        <div
+          role="status"
+          className={
+            igResult === "ok"
+              ? "mb-6 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200"
+              : "mb-6 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-800 ring-1 ring-red-200"
+          }
+        >
+          {t(IG_RESULT[igResult])}
+        </div>
+      )}
       <div className="space-y-6">
         <Card title={t("connect.account")} actions={me?.telegram_linked && <Badge tone="green">✓ {t("connect.linked")}</Badge>}>
           <p className="text-sm text-slate-600">{t("connect.account_hint")}</p>
@@ -86,6 +150,7 @@ export function ConnectPage() {
             </div>
           )}
         </Card>
+        {ch && <InstagramCard ch={ch} />}
       </div>
     </>
   );

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, current_user
 from app.db import get_session
-from app.models import Conversation, Customer, Message
+from app.models import Channel, Conversation, Customer, Message
 from app.schemas.api import AIToggleIn, ConversationOut, MessageOut
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
@@ -28,8 +28,9 @@ async def list_conversations(
     session: AsyncSession = Depends(get_session),
 ):
     stmt = (
-        select(Conversation, Customer.name)
+        select(Conversation, Customer.name, Channel.type)
         .join(Customer, Customer.id == Conversation.customer_id)
+        .join(Channel, Channel.id == Conversation.channel_id)
         .where(Conversation.shop_id == user.shop.id)
         .order_by(Conversation.last_message_at.desc().nulls_last())
         .limit(min(limit, 200))
@@ -38,9 +39,10 @@ async def list_conversations(
     if status:
         stmt = stmt.where(Conversation.status == status)
     out = []
-    for conv, name in await session.execute(stmt):
+    for conv, name, channel_type in await session.execute(stmt):
         item = ConversationOut.model_validate(conv)
         item.customer_name = name
+        item.channel_type = channel_type
         out.append(item)
     return out
 

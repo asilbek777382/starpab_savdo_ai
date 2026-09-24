@@ -5,6 +5,13 @@ import { useI18n } from "../i18n";
 import type { ChatMessage, Conversation } from "../types";
 import { Badge, Button, Card, cx, Empty, ErrorBox, Loading, PageHeader } from "../ui";
 
+const CHANNEL_LABEL: Record<string, string> = {
+  tg_business: "Telegram",
+  tg_bot: "Telegram bot",
+  instagram: "Instagram",
+  test: "Test",
+};
+
 function StatusBadge({ c }: { c: Conversation }) {
   const { t, date } = useI18n();
   return c.status === "ai" ? (
@@ -103,7 +110,10 @@ export function ConversationsPage() {
                   c.id === selectedId ? "ring-brand-500" : "ring-slate-100 hover:ring-slate-300",
                 )}
               >
-                <p className="font-medium text-slate-900">{c.customer_name || `#${c.customer_id}`}</p>
+                <p className="flex items-center justify-between gap-2 font-medium text-slate-900">
+                  <span className="truncate">{c.customer_name || `#${c.customer_id}`}</span>
+                  <span className="shrink-0 text-xs font-normal text-slate-400">{CHANNEL_LABEL[c.channel_type ?? ""] ?? ""}</span>
+                </p>
                 <div className="mt-1 flex items-center justify-between gap-2">
                   <StatusBadge c={c} />
                   {c.last_message_at && <span className="text-xs text-slate-400">{date(c.last_message_at)}</span>}
