@@ -26,7 +26,7 @@ class ShopUpdate(BaseModel):
 
 
 class MeOut(BaseModel):
-    telegram_user_id: int
+    telegram_user_id: int | None
     role: str
     shop: ShopOut
     bot_link: str
@@ -205,3 +205,142 @@ class StatsOut(BaseModel):
     ai_cost: Decimal
     month_conversations: int
     month_limit: int
+
+
+# ---------- auth ----------
+
+
+class RegisterIn(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    phone: str = Field(min_length=7, max_length=30)
+    password: str = Field(min_length=1, max_length=200)
+    shop_name: str = Field(min_length=1, max_length=200)
+    lang: Literal["uz", "ru"] = "uz"
+
+
+class LoginIn(BaseModel):
+    phone: str = Field(min_length=7, max_length=30)
+    password: str = Field(min_length=1, max_length=200)
+
+
+class MagicIn(BaseModel):
+    token: str = Field(min_length=10, max_length=100)
+
+
+class PasswordIn(BaseModel):
+    old_password: str | None = None
+    new_password: str = Field(min_length=1, max_length=200)
+    phone: str | None = Field(default=None, max_length=30)  # magic link bilan kirganlar uchun
+
+
+class ProfileIn(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    lang: Literal["uz", "ru"] | None = None
+
+
+class ShopBrief(BaseModel):
+    id: int
+    name: str
+    role: str
+    plan: str
+    status: str
+
+
+class AccountOut(BaseModel):
+    id: int
+    name: str
+    phone: str | None
+    lang: str
+    telegram_linked: bool
+    has_password: bool
+    is_platform_admin: bool
+    shops: list[ShopBrief]
+
+
+class LinkOut(BaseModel):
+    url: str
+    expires_in: int
+
+
+class ChannelOut(ORM):
+    id: int
+    type: str
+    can_reply: bool
+    is_enabled: bool
+
+
+class ChannelsOut(BaseModel):
+    channels: list[ChannelOut]
+    bot_username: str
+    bot_link: str
+    business_connected: bool
+
+
+class DailyPoint(BaseModel):
+    date: str
+    conversations: int
+    orders: int
+    leads: int
+
+
+# ---------- platforma admini ----------
+
+
+class AdminShopRow(BaseModel):
+    id: int
+    name: str
+    owner_name: str | None
+    owner_phone: str | None
+    plan: str
+    status: str
+    trial_ends_at: datetime | None
+    paid_until: datetime | None
+    month_conversations: int
+    month_cost: Decimal
+    orders_30d: int
+    leads_30d: int
+    business_connected: bool
+    created_at: datetime
+
+
+class AdminOverview(BaseModel):
+    shops: int
+    trials_active: int
+    paying: int
+    mrr: int
+    month_conversations: int
+    month_ai_cost: Decimal
+    month_revenue: int
+
+
+class AdminPlanIn(BaseModel):
+    plan: Literal["trial", "start", "business", "pro"] | None = None
+    trial_days: int | None = Field(default=None, ge=1, le=365)
+    extra_conversations: int | None = Field(default=None, ge=0, le=100_000)
+
+
+class AdminStatusIn(BaseModel):
+    status: Literal["active", "paused"]
+
+
+class AdminPaymentIn(BaseModel):
+    plan: Literal["start", "business", "pro"]
+    months: int = Field(default=1, ge=1, le=24)
+    amount: int = Field(ge=0)
+    provider: Literal["manual", "click", "payme", "card"] = "manual"
+    note: str | None = Field(default=None, max_length=300)
+
+
+class PaymentOut(ORM):
+    id: int
+    amount: int
+    provider: str
+    provider_txn_id: str | None
+    status: str
+    created_at: datetime
+
+
+class AdminShopDetail(BaseModel):
+    shop: AdminShopRow
+    payments: list[PaymentOut]
+    channels: list[ChannelOut]

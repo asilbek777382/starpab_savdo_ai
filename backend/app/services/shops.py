@@ -7,12 +7,16 @@ from app.config import get_settings
 from app.models import Channel, Shop, ShopSettings, ShopUser
 
 
-async def create_shop(session: AsyncSession, owner_tg_id: int, owner_name: str | None, name: str) -> Shop:
+async def create_shop(
+    session: AsyncSession, owner_tg_id: int | None, owner_name: str | None, name: str, account_id: int | None = None
+) -> Shop:
     shop = Shop(name=name, plan="trial", trial_ends_at=datetime.now(UTC) + timedelta(days=get_settings().trial_days))
     session.add(shop)
     await session.flush()
     session.add(ShopSettings(shop_id=shop.id, delivery_zones=[], handoff_rules={}))
-    session.add(ShopUser(shop_id=shop.id, telegram_user_id=owner_tg_id, name=owner_name, role="owner"))
+    session.add(
+        ShopUser(shop_id=shop.id, telegram_user_id=owner_tg_id, account_id=account_id, name=owner_name, role="owner")
+    )
     await session.flush()
     return shop
 

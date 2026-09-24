@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     bot_token: str = ""
     bot_username: str = ""
     public_base_url: str = ""
+    # Web sayt manzili (magic-link uchun); bo'sh bo'lsa public_base_url ishlatiladi
+    public_web_url: str = ""
+    cookie_secure: bool = True
+    session_days: int = 7
     webhook_secret: str = "change-me-webhook"
 
     # LLM (hujjat: arzon/tez model bilan boshlash, murakkabda kuchliroqqa o'tish)

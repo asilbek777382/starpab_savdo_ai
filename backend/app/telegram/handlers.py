@@ -8,8 +8,9 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import get_sessionmaker
-from app.models import Channel, Conversation, Customer, Lead, Message, Order, Shop, ShopSettings, ShopUser
+from app.models import Account, Channel, Conversation, Customer, Lead, Message, Order, Shop, ShopSettings, ShopUser
 from app.runtime import get_runtime
+from app.services import auth as auth_svc
 from app.services.ingest import (
     enqueue_reply,
     get_open_conversation,
@@ -118,6 +119,41 @@ async def on_deleted_business_messages(event: BusinessMessagesDeleted) -> None:
 
 def active_shop_key(tg_user_id: int) -> str:
     return f"botshop:{tg_user_id}"
+
+
+@router.message(CommandStart(deep_link=True, magic=F.args.startswith("link_")))
+async def on_link_telegram(message: TgMessage, command: CommandObject) -> None:
+    """Saytdagi "Telegram'ni ulash" tugmasi: akkauntga shu Telegram bog'lanadi."""
+    rt = get_runtime()
+    account_id = await auth_svc.consume_token(rt.redis, "tglink", command.args.removeprefix("link_"))
+    if account_id is None:
+        await message.answer(texts.LINK_EXPIRED)
+        return
+    async with get_sessionmaker()() as session:
+        account = await session.get(Account, int(account_id))
+        if account is None:
+            await message.answer(texts.LINK_EXPIRED)
+            return
+        try:
+            await auth_svc.link_telegram(session, account, message.from_user.id)
+        except auth_svc.AuthError as exc:
+            await message.answer(f"⚠️ {exc}")
+            return
+        await session.commit()
+    await message.answer(texts.LINK_OK)
+
+
+@router.message(Command("web"))
+async def on_web_login(message: TgMessage) -> None:
+    """Bir martalik havola: botda ro'yxatdan o'tgan sotuvchi saytga parolsiz kiradi."""
+    if message.chat.type != "private":
+        return
+    async with get_sessionmaker()() as session:
+        if not await shops_of_user(session, message.from_user.id):
+            await message.answer("Sizda do'kon yo'q. /start bosing.")
+            return
+    url = await auth_svc.issue_magic_link(get_runtime().redis, message.from_user.id, message.from_user.full_name)
+    await message.answer(texts.WEB_LINK.format(url=url), disable_web_page_preview=True)
 
 
 @router.message(CommandStart(deep_link=True, magic=F.args.startswith("shop_")))

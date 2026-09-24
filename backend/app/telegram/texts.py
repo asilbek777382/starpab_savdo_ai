@@ -13,6 +13,7 @@ HELP = (
     "/mode sell — AI buyurtmagacha sotadi\n/mode lead — AI tanishtiradi, telefon raqamini olib operatorga beradi\n"
     "/tasks <matn> — AI uchun vazifalar (ssenariy)\n"
     "/leads_here — operatorlar guruhida yozing: lidlar shu guruhga keladi\n"
+    "/web — boshqaruv saytiga kirish havolasi\n"
     "/ai_on — AI'ni yoqish\n/ai_off — AI'ni to'xtatish\n\n"
     "Sotuvchi o'zi mijozga yozsa, AI shu suhbatda 30 daqiqa jim turadi."
 )
@@ -27,3 +28,8 @@ BUSINESS_DISCONNECTED = "ℹ️ Telegram Business ulanishi o'chirildi. Navbatchi
 ORDER_CONFIRMED_CUSTOMER = "Buyurtmangiz #{number} tasdiqlandi. Tez orada siz bilan bog'lanamiz. Rahmat!"
 ORDER_CANCELLED_CUSTOMER = "Afsuski, buyurtmangiz #{number} bekor qilindi. Savollar bo'lsa, shu yerga yozing."
 ORDER_SHIPPED_CUSTOMER = "Buyurtmangiz #{number} yo'lga chiqdi."
+LINK_OK = "✅ Telegram akkauntingiz Navbatchi AI profilingizga ulandi. Buyurtma va lid xabarlari shu yerga keladi."
+LINK_EXPIRED = 'Havola eskirgan. Saytdagi "Telegram\'ni ulash" tugmasini qayta bosing.'
+WEB_LINK = (
+    "Boshqaruv paneliga kirish (10 daqiqa amal qiladi, bir marta):\n{url}\n\nKirgach, Profil bo'limida parol o'rnating."
+)

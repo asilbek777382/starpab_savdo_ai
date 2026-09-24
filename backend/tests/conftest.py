@@ -9,6 +9,9 @@ os.environ["ANTHROPIC_API_KEY"] = ""
 os.environ["VOYAGE_API_KEY"] = ""
 os.environ["STT_API_URL"] = ""
 os.environ["DEBOUNCE_SECONDS"] = "0"
+os.environ["COOKIE_SECURE"] = "false"
+os.environ["PUBLIC_WEB_URL"] = "https://navbatchi.test"
+os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-signing-32b"
 
 import pytest  # noqa: E402
 from redis.asyncio import Redis  # noqa: E402

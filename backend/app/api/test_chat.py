@@ -27,14 +27,14 @@ async def test_chat(
     shop_id = user.shop.id
     channel = await get_channel(session, shop_id, "test")
     customer = await session.scalar(
-        select(Customer).where(Customer.channel_id == channel.id, Customer.external_user_id == user.telegram_user_id)
+        select(Customer).where(Customer.channel_id == channel.id, Customer.external_user_id == user.test_customer_id)
     )
     if customer is None:
         customer = Customer(
             shop_id=shop_id,
             channel_id=channel.id,
-            external_user_id=user.telegram_user_id,
-            chat_id=user.telegram_user_id,
+            external_user_id=user.test_customer_id,
+            chat_id=user.test_customer_id,
             name="Test mijoz",
         )
         session.add(customer)

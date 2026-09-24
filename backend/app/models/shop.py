@@ -25,11 +25,18 @@ class Shop(TimestampMixin, Base):
 
 class ShopUser(TimestampMixin, Base):
     __tablename__ = "shop_users"
-    __table_args__ = (UniqueConstraint("shop_id", "telegram_user_id"),)
+    __table_args__ = (
+        UniqueConstraint("shop_id", "telegram_user_id"),
+        UniqueConstraint("shop_id", "account_id", name="uq_shop_users_shop_account"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     shop_id: Mapped[int] = mapped_column(ForeignKey("shops.id", ondelete="CASCADE"), index=True)
-    telegram_user_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    # Telegram ulanmagan (saytdan ro'yxatdan o'tgan) xodimda bo'sh bo'ladi — unga bot xabar yubormaydi
+    telegram_user_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    account_id: Mapped[int | None] = mapped_column(
+        ForeignKey("accounts.id", ondelete="SET NULL", name="fk_shop_users_account"), index=True
+    )
     name: Mapped[str | None] = mapped_column(String(200))
     role: Mapped[str] = mapped_column(String(20), default="owner")  # owner / staff
     notify: Mapped[bool] = mapped_column(Boolean, default=True)
