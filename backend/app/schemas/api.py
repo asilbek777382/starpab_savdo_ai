@@ -62,6 +62,10 @@ class SettingsIO(ORM):
     ai_tasks: str = Field(default="", max_length=4000)
     lead_chat_id: int | None = None
     handoff_after_lead: bool = True
+    voice_mode: Literal["off", "on_voice", "always"] = "off"
+    voice_gender: Literal["female", "male"] = "female"
+    # Faqat o'qish uchun: serverda TTS (Azure) sozlanganmi
+    voice_available: bool = False
 
 
 class CategoryIn(BaseModel):
@@ -167,6 +171,8 @@ class AIToggleIn(BaseModel):
 class TestChatIn(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     reset: bool = False
+    # Mijoz ovozli xabar yuborgandek sinash ("mijoz ovozli yozsa" rejimi uchun)
+    as_voice: bool = False
 
 
 class TestChatOut(BaseModel):
@@ -174,6 +180,7 @@ class TestChatOut(BaseModel):
     replies: list[dict]
     order_number: int | None
     lead_id: int | None = None
+    voice: bool = False
     handed_off: bool
     tools: list[dict]
 

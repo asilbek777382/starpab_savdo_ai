@@ -20,6 +20,7 @@ from app.services.handoff import ai_may_reply, handoff_event, handoff_reply_for,
 from app.services.outbound import build_outbound
 from app.services.ratelimit import add_shop_tokens, shop_tokens_today
 from app.services.stt import transcribe
+from app.services.tts import should_speak
 from app.services.usage import LIMIT_MESSAGES, add_usage, check_limits
 from app.telegram.notify import TelegramNotifier, notify_shop
 from app.telegram.outbound import Outbound
@@ -35,6 +36,7 @@ class ReplyResult:
     text: str = ""
     order_number: int | None = None
     lead_id: int | None = None
+    voice: bool = False
     handed_off: bool = False
     tools: list[dict] = field(default_factory=list)
 
@@ -189,6 +191,10 @@ async def reply_to_conversation(
             await typing
 
     conv.contact = {**(conv.contact or {}), "phones": masker.phones}
+    customer_sent_voice = any(m.media and m.media.get("type") == "voice" for m in pending)
+    voice_sent = False
+    if result.text and not result.llm_failed and should_speak(settings.voice_mode, customer_sent_voice):
+        voice_sent = await _send_voice(rt, outbound, result.text, settings.voice_gender)
     ext_id = await _safe_send(outbound, result.text) if result.text else None
     session.add(
         Message(
@@ -196,6 +202,7 @@ async def reply_to_conversation(
             conversation_id=conv.id,
             role="ai",
             content=result.text,
+            media={"type": "voice_reply"} if voice_sent else None,
             external_message_id=ext_id,
             answered=True,
             tokens_in=result.usage.total_in,
@@ -214,9 +221,26 @@ async def reply_to_conversation(
         text=result.text,
         order_number=ctx.order.number if ctx.order else None,
         lead_id=ctx.lead.id if ctx.lead else None,
+        voice=voice_sent,
         handed_off=ctx.handed_off,
         tools=ctx.tool_log,
     )
+
+
+async def _send_voice(rt: Runtime, outbound: Outbound, text: str, gender: str) -> bool:
+    """Javobni ovozli xabar qilib yuboradi. Kanal ovozni qo'llamasa yoki TTS ishlamasa — False (matn baribir ketadi)."""
+    send_voice = getattr(outbound, "send_voice", None)
+    if rt.tts is None or send_voice is None or len(text) > get_settings().tts_max_chars:
+        return False
+    try:
+        audio = await rt.tts.synthesize(text, gender)
+        if not audio:
+            return False
+        await send_voice(audio)
+        return True
+    except Exception:  # noqa: BLE001 — ovoz qo'shimcha; matnli javob to'xtamasligi kerak
+        log.warning("Ovozli javob yuborilmadi", exc_info=True)
+        return False
 
 
 async def _safe_send(outbound: Outbound, text: str) -> int | None:

@@ -83,3 +83,6 @@ class ShopSettings(Base):
     lead_chat_id: Mapped[int | None] = mapped_column(BigInteger)
     # Telefon olingandan keyin suhbatni operatorga o'tkazish
     handoff_after_lead: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Ovozli javob: off — yo'q, on_voice — mijoz ovozli yozsa, always — har doim (matn bilan birga)
+    voice_mode: Mapped[str] = mapped_column(String(20), default="off", server_default="off")
+    voice_gender: Mapped[str] = mapped_column(String(10), default="female", server_default="female")

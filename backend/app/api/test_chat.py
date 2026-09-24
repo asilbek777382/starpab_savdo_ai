@@ -47,7 +47,8 @@ async def test_chat(
         session.add(conv)
         await session.flush()
     await touch_conversation_window(session, conv)
-    session.add(Message(shop_id=shop_id, conversation_id=conv.id, role="customer", content=body.message))
+    media = {"type": "voice", "transcribed": True} if body.as_voice else None
+    session.add(Message(shop_id=shop_id, conversation_id=conv.id, role="customer", content=body.message, media=media))
     await session.commit()
 
     outbound = RecordingOutbound()
@@ -60,6 +61,7 @@ async def test_chat(
         replies=outbound.sent,
         order_number=result.order_number,
         lead_id=result.lead_id,
+        voice=result.voice,
         handed_off=result.handed_off,
         tools=result.tools,
     )

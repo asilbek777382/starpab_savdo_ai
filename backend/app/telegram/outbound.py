@@ -1,11 +1,12 @@
 """Mijozga xabar yuborish kanali. Telegram Business'da har bir so'rov business_connection_id bilan ketadi."""
 
+import base64
 import logging
 from typing import Protocol
 
 from aiogram import Bot
 from aiogram.enums import ChatAction
-from aiogram.types import InputMediaPhoto
+from aiogram.types import BufferedInputFile, InputMediaPhoto
 
 log = logging.getLogger(__name__)
 
@@ -39,6 +40,12 @@ class TelegramOutbound:
         msgs = await self.bot.send_media_group(self.chat_id, media, business_connection_id=self.bcid)
         return [m.photo[-1].file_id if m.photo else None for m in msgs]
 
+    async def send_voice(self, audio: bytes) -> None:
+        """OGG/Opus ovozli xabar (Telegram voice)."""
+        await self.bot.send_voice(
+            self.chat_id, BufferedInputFile(audio, filename="javob.ogg"), business_connection_id=self.bcid
+        )
+
     async def send_typing(self) -> None:
         try:
             await self.bot.send_chat_action(self.chat_id, ChatAction.TYPING, business_connection_id=self.bcid)
@@ -47,7 +54,7 @@ class TelegramOutbound:
 
 
 class RecordingOutbound:
-    """Test chat va testlar uchun: yuborilgan hamma narsani yozib boradi."""
+    """Test chat va testlar uchun: yuborilgan hamma narsani yozib boradi (ovoz — base64, panelda eshitish uchun)."""
 
     def __init__(self) -> None:
         self.sent: list[dict] = []
@@ -59,6 +66,9 @@ class RecordingOutbound:
     async def send_photos(self, photos: list[str], caption: str | None = None) -> list[str | None]:
         self.sent.append({"type": "photos", "photos": photos, "caption": caption})
         return [None] * len(photos)
+
+    async def send_voice(self, audio: bytes) -> None:
+        self.sent.append({"type": "voice", "audio_b64": base64.b64encode(audio).decode(), "mime": "audio/ogg"})
 
     async def send_typing(self) -> None:
         return None

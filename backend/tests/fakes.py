@@ -5,7 +5,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 
 from aiogram import Bot
-from aiogram.methods import SendMediaGroup, SendMessage, SendPhoto
+from aiogram.methods import SendMediaGroup, SendMessage, SendPhoto, SendVoice
 from aiogram.types import Chat, Message, PhotoSize
 
 from app.ai.llm.base import LLMResponse, LLMUnavailable, Usage
@@ -71,6 +71,8 @@ class FakeBot(Bot):
             return self._message(method.chat_id, method.text)
         if isinstance(method, SendPhoto):
             return self._message(method.chat_id, photo=True)
+        if isinstance(method, SendVoice):
+            return self._message(method.chat_id)
         if isinstance(method, SendMediaGroup):
             return [self._message(method.chat_id, photo=True) for _ in method.media]
         return True
@@ -97,3 +99,15 @@ class RecordingNotifier:
 
     async def flush(self) -> None:
         self.flushed += 1
+
+
+class FakeTTS:
+    def __init__(self, audio: bytes | None = b"OggS-fake-opus", fail: bool = False) -> None:
+        self.audio, self.fail = audio, fail
+        self.calls: list[tuple[str, str]] = []
+
+    async def synthesize(self, text: str, gender: str = "female") -> bytes | None:
+        self.calls.append((text, gender))
+        if self.fail:
+            raise RuntimeError("tts down")
+        return self.audio

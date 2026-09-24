@@ -8,6 +8,7 @@ from redis.asyncio import Redis
 
 from app.ai.llm.base import LLMClient
 from app.services.embeddings import EmbeddingProvider
+from app.services.tts import TTSProvider
 
 
 @dataclass
@@ -17,6 +18,7 @@ class Runtime:
     bot: Bot | None = None
     arq: ArqRedis | None = None
     embedder: EmbeddingProvider | None = None
+    tts: TTSProvider | None = None
 
 
 _runtime: Runtime | None = None

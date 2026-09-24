@@ -26,6 +26,7 @@ from app.api import (
 from app.config import get_settings
 from app.runtime import Runtime, set_runtime
 from app.services.embeddings import get_embedding_provider
+from app.services.tts import get_tts
 from app.telegram.bot import build_dispatcher, setup_webhook
 
 logging.basicConfig(level=logging.INFO)
@@ -38,7 +39,9 @@ async def lifespan(app: FastAPI):
     redis = Redis.from_url(s.redis_url, decode_responses=True)
     arq = await create_pool(RedisSettings.from_dsn(s.redis_url))
     bot = Bot(s.bot_token) if s.bot_token else None
-    set_runtime(Runtime(redis=redis, llm=build_llm(), bot=bot, arq=arq, embedder=get_embedding_provider()))
+    set_runtime(
+        Runtime(redis=redis, llm=build_llm(), bot=bot, arq=arq, embedder=get_embedding_provider(), tts=get_tts())
+    )
     app.state.dispatcher = build_dispatcher()
     if bot is not None and s.bot_mode == "webhook" and s.public_base_url:
         await setup_webhook(bot, f"{s.public_base_url.rstrip('/')}/tg/webhook/{s.webhook_secret}", s.webhook_secret)

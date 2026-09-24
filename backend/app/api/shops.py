@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import CurrentUser, current_user, owner_only
 from app.db import get_session
 from app.models import ShopSettings
+from app.runtime import get_runtime
 from app.schemas.api import MeOut, SettingsIO, ShopOut, ShopUpdate
 from app.telegram.handlers import bot_link
 
@@ -35,7 +36,9 @@ async def update_shop(
 async def get_shop_settings(
     user: CurrentUser = Depends(current_user), session: AsyncSession = Depends(get_session)
 ) -> SettingsIO:
-    return SettingsIO.model_validate(await session.get(ShopSettings, user.shop.id))
+    out = SettingsIO.model_validate(await session.get(ShopSettings, user.shop.id))
+    out.voice_available = get_runtime().tts is not None
+    return out
 
 
 @router.put("/settings", response_model=SettingsIO)
@@ -43,7 +46,9 @@ async def put_shop_settings(
     body: SettingsIO, user: CurrentUser = Depends(owner_only), session: AsyncSession = Depends(get_session)
 ) -> SettingsIO:
     settings = await session.get(ShopSettings, user.shop.id)
-    for field, value in body.model_dump(mode="json").items():
+    for field, value in body.model_dump(mode="json", exclude={"voice_available"}).items():
         setattr(settings, field, value)
     await session.commit()
-    return SettingsIO.model_validate(settings)
+    out = SettingsIO.model_validate(settings)
+    out.voice_available = get_runtime().tts is not None
+    return out

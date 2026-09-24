@@ -48,6 +48,15 @@ class Settings(BaseSettings):
     embedding_model: str = "voyage-3.5"
     embedding_dim: int = 1024
 
+    # TTS — ovozli javoblar (Azure Speech). Kalit bo'lmasa ovozli javob o'chiq
+    azure_speech_key: str = ""
+    azure_speech_region: str = ""
+    tts_voice_uz_female: str = "uz-UZ-MadinaNeural"
+    tts_voice_uz_male: str = "uz-UZ-SardorNeural"
+    tts_voice_ru_female: str = "ru-RU-SvetlanaNeural"
+    tts_voice_ru_male: str = "ru-RU-DmitryNeural"
+    tts_max_chars: int = 900
+
     # STT (ixtiyoriy; OpenAI-mos /audio/transcriptions endpoint)
     stt_api_url: str = ""
     stt_api_key: str = ""

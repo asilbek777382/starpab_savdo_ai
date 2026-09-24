@@ -18,6 +18,7 @@ from app.ai.llm.factory import build_llm
 from app.config import get_settings
 from app.runtime import Runtime, set_runtime
 from app.services.embeddings import get_embedding_provider
+from app.services.tts import get_tts
 from app.telegram.bot import ALLOWED_UPDATES, build_dispatcher
 
 log = logging.getLogger(__name__)
@@ -37,7 +38,9 @@ async def main() -> None:
     redis = Redis.from_url(s.redis_url, decode_responses=True)
     arq = await create_pool(RedisSettings.from_dsn(s.redis_url))
     bot = Bot(s.bot_token)
-    set_runtime(Runtime(redis=redis, llm=build_llm(), bot=bot, arq=arq, embedder=get_embedding_provider()))
+    set_runtime(
+        Runtime(redis=redis, llm=build_llm(), bot=bot, arq=arq, embedder=get_embedding_provider(), tts=get_tts())
+    )
     try:
         await run_polling(bot, build_dispatcher())
     finally:

@@ -10,6 +10,7 @@ from app.ai.llm.factory import build_llm
 from app.config import get_settings
 from app.runtime import Runtime, get_runtime, set_runtime
 from app.services.embeddings import get_embedding_provider
+from app.services.tts import get_tts
 from app.worker.tasks import enrich_product, process_conversation, refresh_instagram_tokens
 
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +26,7 @@ async def startup(ctx: dict) -> None:
             bot=bot,
             arq=ctx["redis"],
             embedder=get_embedding_provider(),
+            tts=get_tts(),
         )
     )
 

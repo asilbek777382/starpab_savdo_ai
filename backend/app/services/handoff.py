@@ -1,5 +1,6 @@
 """Suhbatni odamga (sotuvchiga) uzatish."""
 
+import re
 from datetime import UTC, datetime, timedelta
 
 from app.models import Conversation, Message, ShopSettings
@@ -31,12 +32,35 @@ HANDOFF_REPLY = {
 DEFAULT_HANDOFF_HOURS = 2
 
 
+# Kirill yozuvida o'zbek va rus tilini ajratish uchun tipik so'zlar (maxsus harf bo'lmagan qisqa matnlar uchun)
+_UZ_CYR_WORDS = frozenset(
+    (
+        "салом ассалому алайкум бор йўқ йук керак нарх нархи қанча канча рахмат раҳмат ха ҳа мен сиз биз "
+        "буюртма илтимос яхши бўлади булади олмоқчиман оламан қандай кандай манзил етказиб бериш учун билан "
+        "эмас ва ҳам хам"
+    ).split()
+)
+_RU_WORDS = frozenset(
+    (
+        "здравствуйте привет есть как что это нет да спасибо пожалуйста сколько можно хочу где когда доставка "
+        "цена стоит размер заказ у вас в на и"
+    ).split()
+)
+_WORD = re.compile(r"[а-яёқғўҳ]+")
+
+
 def detect_script(text: str) -> str:
-    cyr = sum(1 for ch in text if "Ѐ" <= ch <= "ӿ")
+    """'uz' (lotin), 'uz_cyrl' (o'zbek kirill) yoki 'ru'."""
+    cyr = sum(1 for ch in text if "\u0400" <= ch <= "\u04ff")
     if cyr * 2 < len([ch for ch in text if ch.isalpha()]):
         return "uz"
-    uz_specific = any(ch in text.lower() for ch in "қғўҳ")
-    return "uz_cyrl" if uz_specific else "ru"
+    low = text.lower()
+    uz_score = 3 * sum(low.count(ch) for ch in "қғўҳ")
+    ru_score = 3 * sum(low.count(ch) for ch in "ыщ")
+    for word in _WORD.findall(low):
+        uz_score += 2 * (word in _UZ_CYR_WORDS)
+        ru_score += 2 * (word in _RU_WORDS)
+    return "uz_cyrl" if uz_score > ru_score else "ru"
 
 
 def handoff_reply_for(text: str) -> str:
