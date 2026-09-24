@@ -7,7 +7,7 @@ from decimal import Decimal
 from sqlalchemy import func, select
 
 from app.ai.context import load_history, maybe_summarize, to_llm_messages
-from app.ai.llm.base import LLMClient, LLMUnavailable, Usage
+from app.ai.llm.base import LLMClient, LLMError, Usage
 from app.ai.prompt import build_state_note, build_system_prompt, fmt_sum
 from app.ai.tools import execute_tool, tools_for_mode
 from app.ai.turn import TurnContext
@@ -99,7 +99,8 @@ async def run_turn(ctx: TurnContext, llm: LLMClient, upto_id: int | None = None)
             messages.append({"role": "user", "content": results})
         else:
             log.warning("Tool iteratsiyalari limiti tugadi (conv=%s)", ctx.conv.id)
-    except LLMUnavailable:
+    except LLMError:
+        # Provayder ishlamasa yoki so'rov rad etilsa (masalan, kalit noto'g'ri) — mijoz javobsiz qolmaydi
         log.exception("LLM ishlamadi (conv=%s)", ctx.conv.id)
         return TurnResult(text=FALLBACK_TEXT, usage=usage, cost=cost_uzs(usage), llm_failed=True)
 

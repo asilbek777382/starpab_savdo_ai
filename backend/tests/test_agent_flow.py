@@ -209,3 +209,17 @@ async def test_trial_expired_blocks_reply(session, runtime, fake_llm, world):
     await say(session, world["conv"], "Salom")
     result, outbound, _ = await reply(session, runtime, world["conv"])
     assert result.status == "blocked:trial_expired" and outbound.sent == [] and fake_llm.calls == []
+
+
+async def test_llm_rejected_request_sends_fallback(session, runtime, world):
+    from app.ai.llm.base import LLMError
+
+    class RejectingLLM:
+        async def chat(self, **kwargs):
+            raise LLMError("401 invalid api key")
+
+    runtime.llm = RejectingLLM()
+    await say(session, world["conv"], "Salom")
+    result, outbound, _ = await reply(session, runtime, world["conv"])
+    assert result.status == "llm_failed"
+    assert outbound.sent[-1]["text"] == "Xabaringiz qabul qilindi, tez orada javob beramiz."
