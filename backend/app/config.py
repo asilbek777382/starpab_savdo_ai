@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     cookie_secure: bool = True
     session_days: int = 7
     webhook_secret: str = "change-me-webhook"
+    # webhook — Telegram HTTPS manzilga yuboradi; polling — domen/HTTPS yo'q serverlar uchun (alohida bot jarayoni)
+    bot_mode: str = "webhook"
 
     # LLM (hujjat: arzon/tez model bilan boshlash, murakkabda kuchliroqqa o'tish)
     anthropic_api_key: str = ""

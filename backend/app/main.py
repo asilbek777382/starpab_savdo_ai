@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     bot = Bot(s.bot_token) if s.bot_token else None
     set_runtime(Runtime(redis=redis, llm=build_llm(), bot=bot, arq=arq, embedder=get_embedding_provider()))
     app.state.dispatcher = build_dispatcher()
-    if bot is not None and s.public_base_url:
+    if bot is not None and s.bot_mode == "webhook" and s.public_base_url:
         await setup_webhook(bot, f"{s.public_base_url.rstrip('/')}/tg/webhook/{s.webhook_secret}", s.webhook_secret)
         log.info("Telegram webhook o'rnatildi")
     yield

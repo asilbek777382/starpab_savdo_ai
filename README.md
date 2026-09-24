@@ -65,6 +65,21 @@ Birinchi platforma admini:
 docker compose exec api python -m app.cli make-admin +998901234567
 ```
 
+### Domensiz serverga (boshqa loyihalar bilan yonma-yon)
+
+Domen/HTTPS bo'lmasa bot **polling** rejimida ishlaydi (webhook shart emas), sayt esa alohida portda:
+
+```bash
+# .env: BOT_MODE=polling, WEB_PORT=8090, COOKIE_SECURE=false, PUBLIC_BASE_URL=http://<server-ip>:8090
+bash deploy/server.sh preflight   # faqat tekshiradi: docker, band portlar, disk, xotira
+bash deploy/server.sh up          # docker compose --profile polling up -d --build
+bash deploy/server.sh status      # konteynerlar va /health
+```
+
+Compose loyiha nomi `navbatchi` — konteyner va volume nomlari serverdagi boshqa loyihalar bilan to'qnashmaydi;
+postgres va redis tashqariga port ochmaydi. HTTP'da parol ochiq kanal orqali o'tadi — imkon bo'lishi bilan domen va
+HTTPS ulang, so'ng `BOT_MODE=webhook`, `COOKIE_SECURE=true`.
+
 ### Lokal (dasturlash uchun)
 
 ```bash

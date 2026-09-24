@@ -1,3 +1,6 @@
+# Loyiha nomi: serverdagi boshqa loyihalar konteyner/volume nomlari bilan to'qnashmasligi uchun
+name: navbatchi
+
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -59,6 +62,20 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Faqat BOT_MODE=polling bo'lganda: docker compose --profile polling up -d
+  bot:
+    build: ./backend
+    env_file: .env
+    environment: *db_env
+    command: ["python", "-m", "app.telegram.polling"]
+    profiles: ["polling"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   web:
     build:
       context: ./web
@@ -76,7 +93,7 @@ services:
         COPY --from=build /web/dist /usr/share/nginx/html
         COPY --from=deploy nginx.conf /etc/nginx/conf.d/default.conf
     ports:
-      - "80:80"
+      - "${WEB_PORT:-80}:80"
     depends_on:
       - api
     restart: unless-stopped
