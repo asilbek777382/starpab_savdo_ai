@@ -69,7 +69,11 @@ def order_keyboard(order: Order, customer: Customer, channel_type: str = "tg_bus
 
 
 async def shop_recipients(session: AsyncSession, shop_id: int) -> list[int]:
-    rows = await session.scalars(select(ShopUser.telegram_user_id).where(ShopUser.shop_id == shop_id, ShopUser.notify))
+    rows = await session.scalars(
+        select(ShopUser.telegram_user_id).where(
+            ShopUser.shop_id == shop_id, ShopUser.notify, ShopUser.telegram_user_id.is_not(None)
+        )
+    )
     return list(rows)
 
 

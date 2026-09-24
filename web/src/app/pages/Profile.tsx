@@ -5,6 +5,7 @@ import { useMe } from "../auth";
 import { useI18n } from "../i18n";
 import { LangSwitch } from "../Layout";
 import type { Account } from "../types";
+import { TelegramLinkCard } from "./Connect";
 import { Button, Card, ErrorBox, Input, Loading, PageHeader, SavedFlash } from "../ui";
 
 export function ProfilePage() {
@@ -62,6 +63,7 @@ export function ProfilePage() {
             <ErrorBox error={saveName.error} />
           </form>
         </Card>
+        <TelegramLinkCard />
         <Card title={me.has_password ? t("profile.password") : t("profile.set_password")}>
           <form
             className="space-y-4"

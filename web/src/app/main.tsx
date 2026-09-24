@@ -9,7 +9,7 @@ import { I18nProvider } from "./i18n";
 import { Layout } from "./Layout";
 import { AdminPage } from "./pages/admin/AdminPage";
 import { AiSettingsPage } from "./pages/AiSettings";
-import { LoginPage, MagicPage, RegisterPage } from "./pages/Auth";
+import { InvitePage, LoginPage, MagicPage, RegisterPage } from "./pages/Auth";
 import { BillingPage } from "./pages/Billing";
 import { CatalogPage } from "./pages/Catalog";
 import { ConnectPage } from "./pages/Connect";
@@ -19,6 +19,7 @@ import { LeadsPage } from "./pages/Leads";
 import { OrdersPage } from "./pages/Orders";
 import { ProfilePage } from "./pages/Profile";
 import { ShopSettingsPage } from "./pages/ShopSettings";
+import { StaffPage } from "./pages/Staff";
 import { TestChatPage } from "./pages/TestChat";
 
 const queryClient = new QueryClient({
@@ -41,6 +42,7 @@ const shopPages = [
   { path: "/connect", el: <ConnectPage /> },
   { path: "/test", el: <TestChatPage /> },
   { path: "/billing", el: <BillingPage /> },
+  { path: "/staff", el: <StaffPage /> },
 ];
 
 createRoot(document.getElementById("root")!).render(
@@ -52,6 +54,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/magic" element={<MagicPage />} />
+            <Route path="/invite" element={<InvitePage />} />
             <Route element={<Layout />}>
               {shopPages.map((p) => (
                 <Route key={p.path} path={p.path} element={<RequireAuth>{p.el}</RequireAuth>} />

@@ -20,6 +20,7 @@ from app.api import (
     orders,
     payments,
     shops,
+    staff,
     stats,
     telegram_webhook,
     test_chat,
@@ -71,6 +72,7 @@ def create_app() -> FastAPI:
         test_chat,
         stats,
         payments,
+        staff,
         admin,
     ):
         app.include_router(module.router)

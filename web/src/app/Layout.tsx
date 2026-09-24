@@ -8,17 +8,19 @@ import type { MessageKey } from "./locales";
 import type { Lang } from "./types";
 import { cx } from "./ui";
 
-const NAV: { to: string; key: MessageKey; icon: string }[] = [
+/** owner: true — faqat do'kon egasiga (operator ko'rmaydi) */
+const NAV: { to: string; key: MessageKey; icon: string; owner?: true }[] = [
   { to: "/", key: "nav.dashboard", icon: "🏠" },
   { to: "/orders", key: "nav.orders", icon: "🧾" },
   { to: "/leads", key: "nav.leads", icon: "📞" },
   { to: "/conversations", key: "nav.conversations", icon: "💬" },
   { to: "/catalog", key: "nav.catalog", icon: "📦" },
-  { to: "/ai", key: "nav.ai", icon: "✨" },
-  { to: "/shop", key: "nav.shop", icon: "🏪" },
-  { to: "/connect", key: "nav.connect", icon: "🔗" },
+  { to: "/ai", key: "nav.ai", icon: "✨", owner: true },
+  { to: "/shop", key: "nav.shop", icon: "🏪", owner: true },
+  { to: "/connect", key: "nav.connect", icon: "🔗", owner: true },
   { to: "/test", key: "nav.test", icon: "🧪" },
-  { to: "/billing", key: "nav.billing", icon: "💳" },
+  { to: "/billing", key: "nav.billing", icon: "💳", owner: true },
+  { to: "/staff", key: "nav.staff", icon: "👥", owner: true },
 ];
 
 export function LangSwitch() {
@@ -93,7 +95,7 @@ function SideNav({ onNavigate }: { onNavigate?: () => void }) {
       )}
       {me && me.shops.length === 1 && <p className="truncate px-3 text-sm font-semibold text-slate-800">{shop?.name}</p>}
       <nav className="space-y-1">
-        {me && me.shops.length > 0 && NAV.map((n) => item(n.to, t(n.key), n.icon))}
+        {me && me.shops.length > 0 && NAV.filter((n) => !n.owner || shop?.role === "owner").map((n) => item(n.to, t(n.key), n.icon))}
         {me?.is_platform_admin && item("/admin", t("nav.admin"), "🛡")}
       </nav>
       <div className="mt-auto space-y-1 border-t border-slate-100 pt-4">

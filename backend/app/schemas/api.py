@@ -396,3 +396,37 @@ class BillingOut(BaseModel):
     providers: list[str]
     yearly_discount: float
     payments: list[PaymentOut]
+
+
+class StaffIn(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    phone: str = Field(min_length=7, max_length=30)
+    role: Literal["owner", "operator"] = "operator"
+
+
+class StaffUpdate(BaseModel):
+    role: Literal["owner", "operator"] | None = None
+    notify: bool | None = None
+
+
+class StaffOut(BaseModel):
+    id: int
+    name: str
+    phone: str | None
+    role: str
+    notify: bool
+    telegram_linked: bool
+    pending: bool  # taklif qabul qilinmagan (parol o'rnatilmagan)
+    is_me: bool
+    invite_url: str | None = None
+
+
+class InviteInfo(BaseModel):
+    name: str
+    phone: str | None
+    shops: list[str]
+
+
+class InviteAcceptIn(BaseModel):
+    token: str = Field(min_length=10, max_length=100)
+    password: str = Field(min_length=1, max_length=200)

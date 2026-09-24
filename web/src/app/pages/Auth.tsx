@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { post, setShopId } from "../api";
+import { get, post, setShopId } from "../api";
 import { useMe } from "../auth";
 import { useI18n } from "../i18n";
 import { LangSwitch } from "../Layout";
@@ -173,6 +173,75 @@ export function MagicPage() {
           <Loading />
         </>
       )}
+    </AuthShell>
+  );
+}
+
+/** Xodim taklifi: do'kon egasi bergan havola orqali parol o'rnatib kirish. */
+export function InvitePage() {
+  const { t } = useI18n();
+  const [params] = useSearchParams();
+  const token = params.get("token") ?? "";
+  const done = useAfterAuth();
+  const [info, setInfo] = useState<{ name: string; phone: string | null; shops: string[] } | null>(null);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<unknown>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    get<{ name: string; phone: string | null; shops: string[] }>(`/api/auth/invite?token=${encodeURIComponent(token)}`)
+      .then(setInfo)
+      .catch(setLoadError);
+  }, [token]);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      done(await post<Account>("/api/auth/invite", { token, password }));
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (loadError)
+    return (
+      <AuthShell title={t("invite.title")}>
+        <div className="space-y-4">
+          <ErrorBox error={loadError} />
+          <Link to="/login" className="font-semibold text-brand-700 hover:underline">
+            {t("auth.login")}
+          </Link>
+        </div>
+      </AuthShell>
+    );
+  if (!info)
+    return (
+      <AuthShell title={t("invite.title")}>
+        <Loading />
+      </AuthShell>
+    );
+  return (
+    <AuthShell title={t("invite.hello", { name: info.name })} subtitle={t("invite.subtitle", { shop: info.shops.join(", ") })}>
+      <form onSubmit={submit} className="space-y-4">
+        {info.phone && <Input label={t("auth.phone")} value={info.phone} disabled />}
+        <Input
+          label={t("invite.password")}
+          hint={t("auth.password_hint")}
+          type="password"
+          autoComplete="new-password"
+          minLength={8}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <ErrorBox error={error} />
+        <Button type="submit" loading={busy} className="w-full">
+          {t("invite.submit")}
+        </Button>
+      </form>
     </AuthShell>
   );
 }

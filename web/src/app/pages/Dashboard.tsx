@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { get, getShopId } from "../api";
-import { useMe } from "../auth";
+import { useCurrentShop, useMe } from "../auth";
 import { DailyBars } from "../DailyBars";
 import { useI18n } from "../i18n";
 import type { MessageKey } from "../locales";
@@ -74,6 +74,7 @@ function SetupChecklist() {
 
 function TrialBanner() {
   const { t } = useI18n();
+  const owner = useCurrentShop()?.role === "owner";
   const shop = useQuery({ queryKey: ["shop"], queryFn: () => get<{ shop: Shop }>("/api/me") });
   const s = shop.data?.shop;
   if (!s || s.plan !== "trial" || !s.trial_ends_at) return null;
@@ -81,13 +82,19 @@ function TrialBanner() {
   const over = days <= 0;
   return (
     <div className={cx("mb-6 rounded-xl px-4 py-3 text-sm font-medium", over ? "bg-red-50 text-red-800 ring-1 ring-red-200" : "bg-amber-50 text-amber-900 ring-1 ring-amber-200")}>
-      {over ? t("dash.trial_over") : t("dash.trial_left", { days })}
+      {over ? t("dash.trial_over") : t("dash.trial_left", { days })}{" "}
+      {owner && (
+        <Link to="/billing" className="whitespace-nowrap font-semibold underline">
+          {t("dash.choose_plan")} →
+        </Link>
+      )}
     </div>
   );
 }
 
 export function DashboardPage() {
   const { t, money } = useI18n();
+  const owner = useCurrentShop()?.role === "owner";
   const [table, setTable] = useState(false);
   const stats = useQuery({ queryKey: ["stats"], queryFn: () => get<Stats>("/api/stats?days=30") });
   const daily = useQuery({ queryKey: ["daily"], queryFn: () => get<DailyPoint[]>("/api/stats/daily?days=30") });
@@ -101,7 +108,7 @@ export function DashboardPage() {
     <>
       <PageHeader title={t("dash.title")} subtitle={t("dash.period")} />
       <TrialBanner />
-      <SetupChecklist />
+      {owner && <SetupChecklist />}
       <ErrorBox error={stats.error} />
       {st ? (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

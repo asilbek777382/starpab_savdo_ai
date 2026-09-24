@@ -269,3 +269,15 @@ export interface Billing {
   yearly_discount: number;
   payments: PaymentRow[];
 }
+
+export interface StaffMember {
+  id: number;
+  name: string;
+  phone: string | null;
+  role: "owner" | "operator";
+  notify: boolean;
+  telegram_linked: boolean;
+  pending: boolean;
+  is_me: boolean;
+  invite_url: string | null;
+}

@@ -77,6 +77,35 @@ function InstagramCard({ ch }: { ch: Channels }) {
   );
 }
 
+/** Akkauntni Telegram'ga ulash: buyurtma va lid xabarnomalari shu Telegram'ga keladi. */
+export function TelegramLinkCard() {
+  const { t } = useI18n();
+  const { data: me } = useMe();
+  const link = useMutation({ mutationFn: () => post<{ url: string }>("/api/auth/telegram-link") });
+  return (
+    <Card title={t("connect.account")} actions={me?.telegram_linked && <Badge tone="green">✓ {t("connect.linked")}</Badge>}>
+      <p className="text-sm text-slate-600">{t("connect.account_hint")}</p>
+      <ErrorBox error={link.error} />
+      {!me?.telegram_linked && (
+        <div className="mt-4 space-y-3">
+          {link.data ? (
+            <>
+              <a href={link.data.url} target="_blank" rel="noreferrer" className="inline-flex rounded-lg bg-[#229ED9] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90">
+                ✈ {t("common.open")} Telegram
+              </a>
+              <p className="text-sm text-slate-500">{t("connect.link_wait")}</p>
+            </>
+          ) : (
+            <Button onClick={() => link.mutate()} loading={link.isPending}>
+              {t("connect.link_btn")}
+            </Button>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 const IG_RESULT = { ok: "connect.ig_ok", error: "connect.ig_error", taken: "connect.ig_taken" } as const;
 
 export function ConnectPage() {
@@ -84,9 +113,7 @@ export function ConnectPage() {
   const [params] = useSearchParams();
   const igResult = params.get("instagram") as keyof typeof IG_RESULT | null;
   const qc = useQueryClient();
-  const { data: me } = useMe();
   const channels = useQuery({ queryKey: ["channels"], queryFn: () => get<Channels>("/api/channels") });
-  const link = useMutation({ mutationFn: () => post<{ url: string }>("/api/auth/telegram-link") });
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["me"] });
     qc.invalidateQueries({ queryKey: ["channels"] });
@@ -102,7 +129,7 @@ export function ConnectPage() {
           </Button>
         }
       />
-      <ErrorBox error={channels.error ?? link.error} />
+      <ErrorBox error={channels.error} />
       {igResult && IG_RESULT[igResult] && (
         <div
           role="status"
@@ -116,25 +143,7 @@ export function ConnectPage() {
         </div>
       )}
       <div className="space-y-6">
-        <Card title={t("connect.account")} actions={me?.telegram_linked && <Badge tone="green">✓ {t("connect.linked")}</Badge>}>
-          <p className="text-sm text-slate-600">{t("connect.account_hint")}</p>
-          {!me?.telegram_linked && (
-            <div className="mt-4 space-y-3">
-              {link.data ? (
-                <>
-                  <a href={link.data.url} target="_blank" rel="noreferrer" className="inline-flex rounded-lg bg-[#229ED9] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90">
-                    ✈ {t("common.open")} Telegram
-                  </a>
-                  <p className="text-sm text-slate-500">{t("connect.link_wait")}</p>
-                </>
-              ) : (
-                <Button onClick={() => link.mutate()} loading={link.isPending}>
-                  {t("connect.link_btn")}
-                </Button>
-              )}
-            </div>
-          )}
-        </Card>
+        <TelegramLinkCard />
         <Card
           title={t("connect.business")}
           actions={ch && (ch.business_connected ? <Badge tone="green">✓ {t("connect.business_ok")}</Badge> : <Badge tone="gold">{t("connect.business_no")}</Badge>)}

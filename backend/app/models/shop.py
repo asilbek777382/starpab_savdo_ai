@@ -38,7 +38,7 @@ class ShopUser(TimestampMixin, Base):
         ForeignKey("accounts.id", ondelete="SET NULL", name="fk_shop_users_account"), index=True
     )
     name: Mapped[str | None] = mapped_column(String(200))
-    role: Mapped[str] = mapped_column(String(20), default="owner")  # owner / staff
+    role: Mapped[str] = mapped_column(String(20), default="owner")  # owner / operator
     notify: Mapped[bool] = mapped_column(Boolean, default=True)
 
 

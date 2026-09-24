@@ -159,7 +159,42 @@ await page.goto(base + "/app/billing?paid=1");
 await page.getByText("Rahmat! To'lov tasdiqlangach").waitFor();
 step("billing: plans, 12-month price, Payme checkout redirect");
 
-// 11. Telefon kengligi
+// 11. Xodimlar: operatorni taklif qilish → taklif havolasi → operator paneli
+const staffPhone = `9${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+await nav("Xodimlar");
+await page.getByRole("heading", { name: "Xodimlar" }).waitFor();
+await page.getByRole("button", { name: "+ Xodim qo'shish" }).click();
+const addDialog = page.getByRole("dialog");
+await addDialog.getByLabel("Ismingiz").fill("Aziz");
+await addDialog.getByLabel("Telefon raqam").fill(staffPhone);
+await addDialog.getByRole("button", { name: "Qo'shish" }).click();
+const inviteUrl = await page.getByRole("dialog").locator("code").innerText();
+await shot("staff-invite");
+await page.keyboard.press("Escape");
+await page.getByText("Taklif qabul qilinmagan").waitFor();
+await shot("staff");
+const opContext = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+await opContext.addInitScript(() => localStorage.setItem("nv_lang", "uz"));
+const op = await opContext.newPage();
+op.on("pageerror", (e) => console.error("OPERATOR PAGE ERROR:", e.message));
+await op.goto(inviteUrl.replace(/^https?:\/\/[^/]+/, base));
+await op.getByRole("heading", { name: "Salom, Aziz!" }).waitFor();
+await op.screenshot({ path: `${out}/panel-invite.png`, fullPage: true });
+await op.getByLabel("Yangi parol").fill("operator-parol-1");
+await op.getByRole("button", { name: "Parolni saqlash va kirish" }).click();
+await op.getByRole("heading", { name: "Bosh sahifa" }).waitFor();
+const opNav = op.getByRole("navigation");
+await opNav.getByRole("link", { name: "Buyurtmalar", exact: true }).waitFor();
+if (await opNav.getByRole("link", { name: "AI sozlamalari" }).count()) throw new Error("operator AI sozlamalarini ko'rmasligi kerak");
+if (await opNav.getByRole("link", { name: "Xodimlar" }).count()) throw new Error("operator xodimlarni ko'rmasligi kerak");
+await op.screenshot({ path: `${out}/panel-operator.png`, fullPage: true });
+await opContext.close();
+await page.reload();
+await page.getByText("Aziz").first().waitFor();
+if (await page.getByText("Taklif qabul qilinmagan").count()) throw new Error("taklif qabul qilingan bo'lishi kerak");
+step("staff: invite operator → accept → restricted panel");
+
+// 12. Telefon kengligi
 await page.setViewportSize({ width: 390, height: 844 });
 await page.goto(base + "/app/");
 await page.getByRole("heading", { name: "Bosh sahifa" }).waitFor();

@@ -7,8 +7,20 @@ from app.config import get_settings
 from app.db import get_session
 from app.models import Account, Shop, ShopUser
 from app.runtime import get_runtime
-from app.schemas.api import AccountOut, LinkOut, LoginIn, MagicIn, PasswordIn, ProfileIn, RegisterIn, ShopBrief
+from app.schemas.api import (
+    AccountOut,
+    InviteAcceptIn,
+    InviteInfo,
+    LinkOut,
+    LoginIn,
+    MagicIn,
+    PasswordIn,
+    ProfileIn,
+    RegisterIn,
+    ShopBrief,
+)
 from app.services import auth as auth_svc
+from app.services import staff as staff_svc
 from app.services.shops import create_shop
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -142,6 +154,43 @@ async def magic_login(body: MagicIn, response: Response, session: AsyncSession =
         raise HTTPException(401, "Havola eskirgan yoki ishlatilgan. Botda /web buyrug'ini qayta yuboring")
     tg_id, _, name = value.partition(":")
     account = await auth_svc.account_for_telegram(session, int(tg_id), name)
+    await session.commit()
+    auth_svc.set_session_cookie(response, account.id)
+    return await account_out(session, account)
+
+
+INVITE_EXPIRED = "Taklif havolasi eskirgan yoki ishlatilgan. Do'kon egasidan yangi havola so'rang"
+
+
+async def _invited_account(session: AsyncSession, token: str) -> Account:
+    account_id = await staff_svc.peek_invite(get_runtime().redis, token)
+    account = await session.get(Account, account_id) if account_id else None
+    if account is None or not account.is_active or not staff_svc.needs_invite(account):
+        raise HTTPException(401, INVITE_EXPIRED)
+    return account
+
+
+@router.get("/invite", response_model=InviteInfo)
+async def invite_info(token: str, session: AsyncSession = Depends(get_session)):
+    """Xodim taklif havolasini ochdi: kim va qaysi do'konga taklif qilinganini ko'rsatadi."""
+    account = await _invited_account(session, token)
+    shops = await session.scalars(
+        select(Shop.name).join(ShopUser, ShopUser.shop_id == Shop.id).where(ShopUser.account_id == account.id)
+    )
+    return InviteInfo(name=account.name, phone=account.phone, shops=list(shops))
+
+
+@router.post("/invite", response_model=AccountOut)
+async def accept_invite(body: InviteAcceptIn, response: Response, session: AsyncSession = Depends(get_session)):
+    """Xodim parolini o'rnatadi va panelga kiradi. Havola bir martalik."""
+    account = await _invited_account(session, body.token)
+    try:
+        auth_svc.validate_password(body.password)
+    except auth_svc.AuthError as exc:
+        raise _bad_request(exc) from exc
+    if await staff_svc.accept_invite(get_runtime().redis, body.token) != account.id:
+        raise HTTPException(401, INVITE_EXPIRED)
+    account.password_hash = auth_svc.hash_password(body.password)
     await session.commit()
     auth_svc.set_session_cookie(response, account.id)
     return await account_out(session, account)
