@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="512" height="512" role="img" aria-label="Navbatchi">
+  <defs>
+    <linearGradient id="nv-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#312E81"/>
+    </linearGradient>
+    <mask id="nv-moon">
+      <rect width="128" height="128" fill="#fff"/>
+      <circle cx="70" cy="52" r="15" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#nv-bg)"/>
+  <path d="M44 26h40a20 20 0 0 1 20 20v26a20 20 0 0 1-20 20H56l-18 13a2.5 2.5 0 0 1-4-2V90.5A20 20 0 0 1 24 72V46a20 20 0 0 1 20-20z" fill="#fff"/>
+  <circle cx="59" cy="59" r="17" fill="#F59E0B" mask="url(#nv-moon)"/>
+  <path d="M87 51l1.9 4.6 4.6 1.9-4.6 1.9L87 64l-1.9-4.6-4.6-1.9 4.6-1.9z" fill="#F59E0B"/>
+</svg>

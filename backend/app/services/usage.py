@@ -76,8 +76,8 @@ async def check_limits(session: AsyncSession, shop: Shop) -> tuple[bool, str | N
 
 
 LIMIT_MESSAGES = {
-    "paused": "Do'kon AI operatori to'xtatilgan.",
-    "trial_expired": "14 kunlik bepul sinov muddati tugadi. AI operator javob bermayapti — tarifni faollashtiring.",
-    "subscription_expired": "Obuna muddati tugadi. AI operator javob bermayapti — to'lovni amalga oshiring.",
+    "paused": "Do'kon uchun Navbatchi to'xtatilgan.",
+    "trial_expired": "14 kunlik bepul sinov muddati tugadi. Navbatchi javob bermayapti — tarifni faollashtiring.",
+    "subscription_expired": "Obuna muddati tugadi. Navbatchi javob bermayapti — to'lovni amalga oshiring.",
     "limit_reached": "Bu oy uchun suhbatlar limiti tugadi. Qo'shimcha paket (+100 suhbat) yoki yuqoriroq tarif oling.",
 }

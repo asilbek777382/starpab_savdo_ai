@@ -1,6 +1,8 @@
-# AI Operator — Telegram'da 24/7 AI sotuvchi
+<p align="center"><img src="branding/navbatchi-logo.svg" alt="Navbatchi — 24/7 AI sotuvchi" width="440"></p>
 
-Kichik do'konlar uchun sun'iy intellektli operator. Mijozlarga o'zbek (lotin/kirill) va rus tilida javob beradi,
+# Navbatchi — Telegram'da 24/7 AI sotuvchi
+
+Kichik do'konlar uchun sun'iy intellektli sotuvchi-operator: kechasi ham, band paytda ham navbatda. Mijozlarga o'zbek (lotin/kirill) va rus tilida javob beradi,
 katalogdan mahsulot topadi, buyurtmani rasmiylashtiradi yoki telefon raqamini olib operatorga uzatadi.
 
 Asosiy tamoyil: **AI hech narsani o'ylab topmaydi.** Narx, qoldiq va yetkazib berish narxi faqat bazadan
@@ -108,3 +110,9 @@ ANTHROPIC_API_KEY=... uv run python -m eval.run_eval --min 0.85
 
 Har bir prompt yoki model o'zgarishidan keyin ishga tushiring. Haqiqiy suhbatlardagi xatolarni
 `eval/cases.jsonl` ga qo'shib boring (maqsad: 100–200 holat).
+
+## Brend
+
+`branding/` papkasida: `navbatchi-mark.svg` (belgi), `navbatchi-logo.svg` / `navbatchi-logo-dark.svg` (yorug'/qorong'i fon),
+`navbatchi-avatar-512.png` (Telegram bot avatari — @BotFather → Edit Bot → Edit Botpic). Ranglar: indigo `#4F46E5` → `#312E81`,
+amber `#F59E0B`; shrift Manrope (matn logoda vektorga o'girilgan).

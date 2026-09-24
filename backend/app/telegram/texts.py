@@ -1,5 +1,5 @@
 ONBOARDING = (
-    "Assalomu alaykum! <b>{shop}</b> do'koni uchun AI operator yaratildi. 14 kunlik bepul sinov boshlandi.\n\n"
+    "Assalomu alaykum! <b>{shop}</b> do'koni uchun Navbatchi — AI sotuvchi yaratildi. 14 kunlik bepul sinov boshlandi.\n\n"
     "Ishga tushirish:\n"
     "1. Katalog va do'kon ma'lumotlarini (manzil, yetkazib berish, to'lov) kiriting.\n"
     "2. Telegram Business'ga ulang: Sozlamalar → Telegram Business → Chatbots → <code>@{bot}</code>. "
@@ -18,12 +18,12 @@ HELP = (
 )
 CUSTOMER_WELCOME = "Assalomu alaykum! {shop} do'koniga xush kelibsiz. Savolingizni yozing."
 CUSTOMER_NO_SHOP = "Iltimos, do'kon bergan havola orqali kiring."
-BUSINESS_CONNECTED = "✅ Telegram Business ulandi. AI operator endi <b>{shop}</b> nomidan mijozlarga javob beradi."
+BUSINESS_CONNECTED = "✅ Telegram Business ulandi. Navbatchi endi <b>{shop}</b> nomidan mijozlarga javob beradi."
 BUSINESS_NO_REPLY = (
     "⚠️ Bot ulandi, lekin \"xabarlarga javob berish\" ruxsati yo'q. Telegram Business → Chatbots bo'limida "
     "ruxsatni yoqing, aks holda AI javob bera olmaydi."
 )
-BUSINESS_DISCONNECTED = "ℹ️ Telegram Business ulanishi o'chirildi. AI operator shaxsiy chatlarda javob bermaydi."
+BUSINESS_DISCONNECTED = "ℹ️ Telegram Business ulanishi o'chirildi. Navbatchi shaxsiy chatlarda javob bermaydi."
 ORDER_CONFIRMED_CUSTOMER = "Buyurtmangiz #{number} tasdiqlandi. Tez orada siz bilan bog'lanamiz. Rahmat!"
 ORDER_CANCELLED_CUSTOMER = "Afsuski, buyurtmangiz #{number} bekor qilindi. Savollar bo'lsa, shu yerga yozing."
 ORDER_SHIPPED_CUSTOMER = "Buyurtmangiz #{number} yo'lga chiqdi."
