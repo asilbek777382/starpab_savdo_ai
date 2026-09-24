@@ -15,6 +15,11 @@ os.environ["IG_APP_SECRET"] = "ig-app-secret"
 os.environ["IG_VERIFY_TOKEN"] = "ig-verify"
 os.environ["PUBLIC_WEB_URL"] = "https://navbatchi.test"
 os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-signing-32b"
+os.environ["PAYME_MERCHANT_ID"] = "payme-merchant"
+os.environ["PAYME_KEY"] = "payme-key"
+os.environ["CLICK_SERVICE_ID"] = "101"
+os.environ["CLICK_MERCHANT_ID"] = "202"
+os.environ["CLICK_SECRET_KEY"] = "click-secret"
 
 import pytest  # noqa: E402
 from redis.asyncio import Redis  # noqa: E402

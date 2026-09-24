@@ -30,6 +30,7 @@ from app.schemas.api import (
     ChannelOut,
     PaymentOut,
 )
+from app.services.billing import activate_subscription
 from app.services.usage import period_key
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(platform_admin)])
@@ -188,21 +189,17 @@ async def change_status(shop_id: int, body: AdminStatusIn, session: AsyncSession
 async def add_payment(shop_id: int, body: AdminPaymentIn, session: AsyncSession = Depends(get_session)):
     """Qo'lda to'lov (karta o'tkazmasi va chek): obuna davri uzaytiriladi va tarif o'rnatiladi."""
     shop = await _get_shop(session, shop_id)
-    now = datetime.now(UTC)
-    start = max(await _paid_until(session, shop_id) or now, now)
     session.add(
-        Payment(shop_id=shop_id, amount=body.amount, provider=body.provider, provider_txn_id=body.note, status="paid")
-    )
-    session.add(
-        Subscription(
+        Payment(
             shop_id=shop_id,
+            amount=body.amount,
+            provider=body.provider,
+            provider_txn_id=body.note,
+            status="paid",
             plan=body.plan,
-            period_start=start,
-            period_end=start + timedelta(days=MONTH_DAYS * body.months),
-            status="active",
+            months=body.months,
         )
     )
-    shop.plan = body.plan
-    shop.status = "active"
+    await activate_subscription(session, shop, body.plan, body.months)
     await session.commit()
     return await shop_detail(shop_id, session)

@@ -18,6 +18,7 @@ from app.api import (
     instagram_webhook,
     leads,
     orders,
+    payments,
     shops,
     stats,
     telegram_webhook,
@@ -69,6 +70,7 @@ def create_app() -> FastAPI:
         conversations,
         test_chat,
         stats,
+        payments,
         admin,
     ):
         app.include_router(module.router)

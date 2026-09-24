@@ -1,5 +1,5 @@
 from app.models.account import Account
-from app.models.billing import EXTRA_PACK, PLANS, Payment, Subscription
+from app.models.billing import EXTRA_PACK, PLANS, YEARLY_DISCOUNT, Payment, Subscription
 from app.models.catalog import EMBEDDING_DIM, Category, Product, ProductImage, ProductVariant
 from app.models.chat import Conversation, Customer, Message, UsageCounter
 from app.models.lead import LEAD_STATUSES, Lead
@@ -13,6 +13,7 @@ __all__ = [
     "LEAD_STATUSES",
     "ORDER_STATUSES",
     "PLANS",
+    "YEARLY_DISCOUNT",
     "Category",
     "Channel",
     "Conversation",

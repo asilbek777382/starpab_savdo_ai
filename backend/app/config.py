@@ -32,6 +32,15 @@ class Settings(BaseSettings):
     ig_oauth_url: str = "https://api.instagram.com"
     ig_authorize_url: str = "https://www.instagram.com/oauth/authorize"
 
+    # Obuna to'lovlari. Payme: Merchant API (JSON-RPC), Click: SHOP API (prepare/complete)
+    payme_merchant_id: str = ""
+    payme_key: str = ""  # kassa kaliti (Basic auth paroli; login — "Paycom")
+    payme_checkout_url: str = "https://checkout.paycom.uz"
+    click_service_id: str = ""
+    click_merchant_id: str = ""
+    click_secret_key: str = ""
+    click_pay_url: str = "https://my.click.uz/services/pay"
+
     # LLM (hujjat: arzon/tez model bilan boshlash, murakkabda kuchliroqqa o'tish)
     anthropic_api_key: str = ""
     llm_model: str = "claude-haiku-4-5"

@@ -18,6 +18,7 @@ const NAV: { to: string; key: MessageKey; icon: string }[] = [
   { to: "/shop", key: "nav.shop", icon: "🏪" },
   { to: "/connect", key: "nav.connect", icon: "🔗" },
   { to: "/test", key: "nav.test", icon: "🧪" },
+  { to: "/billing", key: "nav.billing", icon: "💳" },
 ];
 
 export function LangSwitch() {

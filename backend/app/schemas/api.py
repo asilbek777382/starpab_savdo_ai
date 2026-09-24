@@ -351,6 +351,8 @@ class PaymentOut(ORM):
     provider: str
     provider_txn_id: str | None
     status: str
+    plan: str | None = None
+    months: int = 1
     created_at: datetime
 
 
@@ -358,3 +360,39 @@ class AdminShopDetail(BaseModel):
     shop: AdminShopRow
     payments: list[PaymentOut]
     channels: list[ChannelOut]
+
+
+# ---------- obuna to'lovi ----------
+
+
+class CheckoutIn(BaseModel):
+    plan: Literal["start", "business", "pro"]
+    months: Literal[1, 3, 6, 12] = 1
+    provider: Literal["payme", "click"]
+
+
+class CheckoutOut(BaseModel):
+    url: str
+    payment_id: int
+    amount: int
+
+
+class PlanInfo(BaseModel):
+    code: str
+    price: int
+    conversations: int
+    max_products: int | None
+    instagram: bool
+
+
+class BillingOut(BaseModel):
+    plan: str
+    status: str
+    trial_ends_at: datetime | None
+    paid_until: datetime | None
+    month_conversations: int
+    month_limit: int
+    plans: list[PlanInfo]
+    providers: list[str]
+    yearly_discount: float
+    payments: list[PaymentOut]

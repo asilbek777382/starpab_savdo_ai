@@ -23,11 +23,11 @@ Asosiy tamoyil: **AI hech narsani o'ylab topmaydi.** Narx, qoldiq va yetkazib be
 | Handoff | "operator", shikoyat, qaytarish kabi so'zlar; sotuvchi o'zi yozsa AI 30 daqiqa jim turadi |
 | Xabarnomalar | Yangi buyurtma (Tasdiqlash/Bekor/Yuborildi), lid (operatorlar guruhiga), handoff |
 | Ishonchlilik | update_id dedup, debounce (2.5 s) + suhbat lock, rate limit, LLM fallback, telefonni maskalash |
-| Billing | 14 kunlik trial, tariflar va oylik suhbat limiti, token va xarajat hisobi |
+| Billing | 14 kunlik trial, tariflar va oylik suhbat limiti, **Payme/Click orqali onlayn obuna to'lovi** (1/3/6/12 oy, yillikka −20%), token va xarajat hisobi |
 | Web sayt | Landing (uz/ru) + boshqaruv paneli: telefon + parol bilan kirish, platforma admini |
 | REST API | Panel (cookie sessiya) va Telegram Mini App (`initData` HMAC) uchun |
 
-Keyingi bosqichlar: Click/Payme avtomatik to'lov, SMS orqali telefonni tasdiqlash, WhatsApp.
+Keyingi bosqichlar: SMS orqali telefonni tasdiqlash, WhatsApp.
 
 ## Arxitektura
 
@@ -160,12 +160,26 @@ matni ovoz uchun lotinga o'giriladi). Provayder: **Azure Speech** neyron ovozlar
 - Faqat Telegram'da (Business va bot). Instagram'da — matn. TTS ishlamasa yoki javob juda uzun bo'lsa — faqat matn.
 - Test chatda "Ovozli xabar sifatida yuborish" belgisini qo'yib, javobni panelning o'zida eshitish mumkin.
 
+## Obuna to'lovi (Payme, Click)
+
+Sotuvchi panelda **Tarif va to'lov** bo'limida tarif (Start/Biznes/Pro) va muddatni (1, 3, 6, 12 oy; yillikka −20%)
+tanlab, Payme yoki Click sahifasiga o'tadi. To'lov tasdiqlangach obuna avtomatik faollashadi: yangi davr joriy to'langan
+muddat tugagan joydan boshlanadi. To'lovni faqat do'kon egasi qila oladi.
+
+- **Payme** (Merchant API, JSON-RPC): `.env` da `PAYME_MERCHANT_ID`, `PAYME_KEY`; kabinetda endpoint
+  `https://<domen>/api/payments/payme`. Sinov uchun `PAYME_CHECKOUT_URL=https://test.paycom.uz` va test kaliti.
+  Barcha metodlar (`CheckPerformTransaction` … `GetStatement`), 12 soatlik timeout va idempotentlik qo'llab-quvvatlanadi.
+- **Click** (SHOP API): `.env` da `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID`, `CLICK_SECRET_KEY`; kabinetda Prepare —
+  `https://<domen>/api/payments/click/prepare`, Complete — `https://<domen>/api/payments/click/complete`. Imzo (md5)
+  tekshiriladi.
+- Kalitlar kiritilmagan provayder panelda ko'rsatilmaydi. Platforma admini avvalgidek qo'lda to'lov qo'sha oladi.
+
 ## Web panel
 
 Sotuvchi saytda **telefon + parol** bilan ro'yxatdan o'tadi (do'kon va 14 kunlik sinov yaratiladi). Panel bo'limlari:
 bosh sahifa (ishga tushirish ro'yxati, statistika, kunlik grafiklar), buyurtmalar, lidlar, suhbatlar (AI'ni to'xtatish),
 katalog (Excel import), AI sozlamalari (sotish/lid rejimi, vazifalar, qoidalar), do'kon ma'lumotlari (yetkazib berish
-hududlari), Telegram'ni ulash, test chat, profil. Platforma admini (`is_platform_admin`) `/app/admin` da barcha
+hududlari), Telegram'ni ulash, test chat, tarif va to'lov, profil. Platforma admini (`is_platform_admin`) `/app/admin` da barcha
 do'konlarni, tariflarni va qo'lda to'lovlarni boshqaradi.
 
 Telegram bilan bog'lash: panelda "Telegram'ni ulash" → botda Start (xabarnomalar shu Telegram'ga keladi).
@@ -179,7 +193,7 @@ Bir nechta do'kon bo'lsa `X-Shop-Id` bilan tanlanadi. To'liq ro'yxat: `/docs`.
 `/api/auth/*` (register, login, logout, me, password, telegram-link, magic), `/api/instagram/*` (connect, callback,
 disconnect), `/api/me`, `/api/shop`, `/api/channels`, `/api/settings` (FAQ, yetkazib berish hududlari, rejim, vazifalar, lid guruhi),
 `/api/categories`, `/api/products` (+ `/import`, `/api/products-import-template`), `/api/orders`,
-`/api/leads`, `/api/conversations` (+ `/{id}/ai` — "men o'zim javob beraman"), `/api/test-chat`, `/api/stats`
+`/api/leads`, `/api/billing` (+ `/checkout`), `/api/conversations` (+ `/{id}/ai` — "men o'zim javob beraman"), `/api/test-chat`, `/api/stats`
 (+ `/daily`), `/api/admin/*` (platforma admini).
 
 ## Testlar va sifat

@@ -237,3 +237,35 @@ export interface AdminShopDetail {
   payments: { id: number; amount: number; provider: string; provider_txn_id: string | null; status: string; created_at: string }[];
   channels: { id: number; type: string; can_reply: boolean; is_enabled: boolean }[];
 }
+
+export interface PaymentRow {
+  id: number;
+  amount: number;
+  provider: string;
+  provider_txn_id: string | null;
+  status: string;
+  plan: string | null;
+  months: number;
+  created_at: string;
+}
+
+export interface PlanInfo {
+  code: "start" | "business" | "pro";
+  price: number;
+  conversations: number;
+  max_products: number | null;
+  instagram: boolean;
+}
+
+export interface Billing {
+  plan: string;
+  status: string;
+  trial_ends_at: string | null;
+  paid_until: string | null;
+  month_conversations: number;
+  month_limit: number;
+  plans: PlanInfo[];
+  providers: ("payme" | "click")[];
+  yearly_discount: number;
+  payments: PaymentRow[];
+}

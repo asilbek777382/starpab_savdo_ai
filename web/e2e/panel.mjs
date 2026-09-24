@@ -139,7 +139,27 @@ await page.getByRole("cell", { name: "business" }).first().waitFor();
 await shot("admin");
 step("platform admin: manual payment → plan business");
 
-// 10. Telefon kengligi
+// 10. Tarif va to'lov: admin to'lovi tarixda, Payme checkout havolasi
+await nav("Tarif va to'lov");
+await page.getByRole("heading", { name: "Tarif va to'lov" }).waitFor();
+await page.getByText("To'lovlar tarixi").waitFor();
+await page.getByRole("button", { name: "12 oy (−20%)" }).click();
+await page.getByText("239 200 so'm").first().waitFor(); // biznes: 299 000 * 0.8
+await shot("billing");
+let checkoutUrl = "";
+await page.route("https://checkout.paycom.uz/**", (route) => {
+  checkoutUrl = route.request().url();
+  return route.fulfill({ status: 200, contentType: "text/html", body: "<h1>Payme</h1>" });
+});
+await page.getByRole("button", { name: "Payme orqali to'lash" }).nth(1).click();
+await page.waitForURL("https://checkout.paycom.uz/**");
+const decoded = Buffer.from(checkoutUrl.split("/").pop(), "base64").toString();
+if (!decoded.includes(`a=${2_870_400 * 100}`)) throw new Error(`Payme havolasi noto'g'ri: ${decoded}`);
+await page.goto(base + "/app/billing?paid=1");
+await page.getByText("Rahmat! To'lov tasdiqlangach").waitFor();
+step("billing: plans, 12-month price, Payme checkout redirect");
+
+// 11. Telefon kengligi
 await page.setViewportSize({ width: 390, height: 844 });
 await page.goto(base + "/app/");
 await page.getByRole("heading", { name: "Bosh sahifa" }).waitFor();
@@ -147,6 +167,11 @@ await page.getByText("Oylik limit").waitFor();
 await shot("mobile-dashboard");
 const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 if (overflow > 1) throw new Error(`mobil gorizontal overflow: ${overflow}px`);
+await page.goto(base + "/app/billing");
+await page.getByRole("heading", { name: "Tarif va to'lov" }).waitFor();
+const billingOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+if (billingOverflow > 1) throw new Error(`mobil billing overflow: ${billingOverflow}px`);
+await shot("mobile-billing");
 await page.getByRole("button", { name: "Menyu" }).click();
 await shot("mobile-menu");
 step("mobile layout");

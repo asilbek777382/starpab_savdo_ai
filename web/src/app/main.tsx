@@ -10,6 +10,7 @@ import { Layout } from "./Layout";
 import { AdminPage } from "./pages/admin/AdminPage";
 import { AiSettingsPage } from "./pages/AiSettings";
 import { LoginPage, MagicPage, RegisterPage } from "./pages/Auth";
+import { BillingPage } from "./pages/Billing";
 import { CatalogPage } from "./pages/Catalog";
 import { ConnectPage } from "./pages/Connect";
 import { ConversationsPage } from "./pages/Conversations";
@@ -39,6 +40,7 @@ const shopPages = [
   { path: "/shop", el: <ShopSettingsPage /> },
   { path: "/connect", el: <ConnectPage /> },
   { path: "/test", el: <TestChatPage /> },
+  { path: "/billing", el: <BillingPage /> },
 ];
 
 createRoot(document.getElementById("root")!).render(
