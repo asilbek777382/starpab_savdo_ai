@@ -14,6 +14,7 @@ Asosiy tamoyil: **AI hech narsani o'ylab topmaydi.** Narx, qoldiq va yetkazib be
 |---|---|
 | Kanallar | Telegram Business (do'kon akkauntidan javob), oddiy bot rejimi (`t.me/<bot>?start=shop_<id>`), Instagram Direct |
 | Ovoz | Mijoz ovozini tushunadi (STT) va ovoz bilan javob beradi (Azure TTS, o'zbek/rus) |
+| Rasm bo'yicha qidiruv | Mijoz rasm yuborsa ("shu bormi?"), Claude rasmni ko'rib katalogdan o'xshash mahsulotni topadi |
 | AI | Claude, tool calling: `search_products`, `get_product`, `send_product_photos`, `update_cart`, `get_delivery_info`, `create_order`, `save_lead`, `handoff_to_human` |
 | AI rejimlari | **sell** — suhbatdan buyurtmagacha; **lead** — tanishtiradi, telefon raqamini so'raydi, operatorga yuboradi |
 | Vazifalar | Sotuvchi AI'ga erkin matnda ssenariy yozadi (`/tasks` yoki API) |

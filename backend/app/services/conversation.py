@@ -1,6 +1,7 @@
 """Suhbatga AI javobini tayyorlash va yuborish. Worker ham, test chat ham shu funksiyadan foydalanadi."""
 
 import asyncio
+import base64
 import contextlib
 import io
 import logging
@@ -47,7 +48,11 @@ async def _typing_loop(outbound: Outbound) -> None:
         await asyncio.sleep(4)
 
 
-async def _download_voice(rt: Runtime, media: dict) -> bytes | None:
+MAX_IMAGES = 3
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+
+async def _download_media(rt: Runtime, media: dict) -> bytes | None:
     """Telegram: file_id orqali; Instagram: attachment URL orqali."""
     if media.get("url"):
         async with httpx.AsyncClient(timeout=30) as client:
@@ -61,13 +66,50 @@ async def _download_voice(rt: Runtime, media: dict) -> bytes | None:
     return None
 
 
+def _image_type(data: bytes) -> str | None:
+    if data.startswith(b"\xff\xd8"):
+        return "image/jpeg"
+    if data.startswith(b"\x89PNG"):
+        return "image/png"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    if data[:3] == b"GIF":
+        return "image/gif"
+    return None
+
+
+async def _collect_images(rt: Runtime, pending: list[Message]) -> list[dict]:
+    """Mijoz shu navbatda yuborgan rasmlarni AI ko'rishi uchun image bloklariga aylantiradi."""
+    blocks: list[dict] = []
+    for msg in pending:
+        if len(blocks) >= MAX_IMAGES:
+            break
+        if not (msg.media and msg.media.get("type") == "photo"):
+            continue
+        try:
+            data = await _download_media(rt, msg.media)
+        except Exception:  # noqa: BLE001 — rasm yuklanmasa, matn bilan davom etamiz
+            log.warning("Mijoz rasmi yuklanmadi", exc_info=True)
+            continue
+        media_type = _image_type(data or b"")
+        if not data or media_type is None or len(data) > MAX_IMAGE_BYTES:
+            continue
+        blocks.append(
+            {
+                "type": "image",
+                "source": {"type": "base64", "media_type": media_type, "data": base64.b64encode(data).decode()},
+            }
+        )
+    return blocks
+
+
 async def _transcribe_voices(rt: Runtime, pending: list[Message]) -> None:
     for msg in pending:
         if not (msg.media and msg.media.get("type") == "voice") or msg.media.get("transcribed"):
             continue
         text = None
         try:
-            audio = await _download_voice(rt, msg.media)
+            audio = await _download_media(rt, msg.media)
             if audio:
                 text = await transcribe(audio)
         except Exception:  # noqa: BLE001
@@ -181,6 +223,7 @@ async def reply_to_conversation(
         masker=masker,
         embedder=rt.embedder,
         order_source="test" if channel.type == "test" else "ai",
+        images=await _collect_images(rt, pending),
     )
     typing = asyncio.create_task(_typing_loop(outbound))
     try:

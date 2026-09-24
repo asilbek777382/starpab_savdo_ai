@@ -84,6 +84,9 @@ def build_system_prompt(shop: Shop, settings: ShopSettings, catalog_lines: list[
         "- Narx, qoldiq, yetkazib berish narxini faqat toollardan ol. Hech qachon o'ylab topma.",
         "- Mahsulot haqida so'ralsa, avval search_products chaqir. Rasm so'ralsa yoki foydali bo'lsa, "
         "send_product_photos chaqir.",
+        "- Mijoz rasm yuborsa: rasmdagi mahsulotni turi, rangi, materiali bo'yicha qisqa tasvirlab, shu so'zlar bilan "
+        "search_products chaqir. Aynan o'sha topilmasa, eng o'xshashlarini taklif qil (rasmini yubor). Rasmda nima "
+        "so'ralayotgani noaniq bo'lsa, bitta aniqlashtiruvchi savol ber.",
         '- Bilmasang: "Aniqlab, menejer javob beradi" de va handoff_to_human chaqir. '
         "Katalogda yo'q ma'lumot ikkinchi marta so'ralsa ham handoff_to_human chaqir.",
         "- Shikoyat, qaytarish, pulni qaytarish mavzusida yoki mijoz odam/operator so'rasa — handoff_to_human.",

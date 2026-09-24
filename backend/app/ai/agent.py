@@ -68,6 +68,9 @@ async def run_turn(ctx: TurnContext, llm: LLMClient, upto_id: int | None = None)
         ctx.conv.stage, await cart_view(ctx.session, ctx.conv), ctx.customer.name, ctx.conv.contact or {}
     )
     messages[-1]["content"].append({"type": "text", "text": state})
+    if ctx.images:
+        # Rasmlar matndan oldin: model avval rasmni ko'radi, keyin savolni o'qiydi
+        messages[-1]["content"][:0] = ctx.images
     system = build_system_prompt(ctx.shop, ctx.settings, await catalog_lines(ctx))
 
     tools = tools_for_mode(ctx.settings.ai_mode)

@@ -46,6 +46,8 @@ class TurnContext:
     masker: PhoneMasker
     embedder: EmbeddingProvider | None = None
     order_source: str = "ai"
+    # Mijozning shu navbatdagi rasmlari (Messages API image bloklari)
+    images: list[dict] = field(default_factory=list)
     # Turn natijalari
     handed_off: bool = False
     order: Order | None = None
