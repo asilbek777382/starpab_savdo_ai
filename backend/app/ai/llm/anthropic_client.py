@@ -6,8 +6,15 @@ from app.ai.llm.base import LLMError, LLMResponse, LLMUnavailable, Usage
 class AnthropicLLM:
     """Claude Messages API. System prompt (do'kon ma'lumoti) keshlanadi — u har so'rovda bir xil."""
 
-    def __init__(self, api_key: str, model: str, max_tokens: int = 2048, timeout: float = 60.0) -> None:
-        self.client = anthropic.AsyncAnthropic(api_key=api_key or None, timeout=timeout, max_retries=2)
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        max_tokens: int = 2048,
+        timeout: float = 60.0,
+        client: anthropic.AsyncAnthropic | None = None,
+    ) -> None:
+        self.client = client or anthropic.AsyncAnthropic(api_key=api_key or None, timeout=timeout, max_retries=2)
         self.model = model
         self.max_tokens = max_tokens
 
