@@ -62,6 +62,8 @@ export interface Settings {
   voice_mode: "off" | "on_voice" | "always";
   voice_gender: "female" | "male";
   voice_available: boolean;
+  cart_reminder_enabled: boolean;
+  cart_reminder_hours: number;
 }
 
 export interface Variant {

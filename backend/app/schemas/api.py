@@ -64,6 +64,8 @@ class SettingsIO(ORM):
     handoff_after_lead: bool = True
     voice_mode: Literal["off", "on_voice", "always"] = "off"
     voice_gender: Literal["female", "male"] = "female"
+    cart_reminder_enabled: bool = True
+    cart_reminder_hours: int = Field(default=3, ge=1, le=20)
     # Faqat o'qish uchun: serverda TTS (Azure) sozlanganmi
     voice_available: bool = False
 

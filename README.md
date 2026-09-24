@@ -20,6 +20,7 @@ Asosiy tamoyil: **AI hech narsani o'ylab topmaydi.** Narx, qoldiq va yetkazib be
 | Vazifalar | Sotuvchi AI'ga erkin matnda ssenariy yozadi (`/tasks` yoki API) |
 | Katalog | CRUD, Excel/CSV import (shablon bilan), variantlar (razmer/rang/qoldiq), rasmlar |
 | Qidiruv | pg_trgm (lotin/kirill/rus, imlo xatolari) + ixtiyoriy pgvector, RRF bilan birlashtirish |
+| Savat eslatmasi | Mijoz savatni to'ldirib jim qolsa (1–12 soat, sozlanadi) — bitta eslatma: mahsulotlar va narxlar bazadan, mijoz tilida (uz/кир/ru); omborda yo'q variantlar tushiriladi, 22 soatdan keyin yozilmaydi |
 | Handoff | "operator", shikoyat, qaytarish kabi so'zlar; sotuvchi o'zi yozsa AI 30 daqiqa jim turadi |
 | Xabarnomalar | Yangi buyurtma (Tasdiqlash/Bekor/Yuborildi), lid (operatorlar guruhiga), handoff |
 | Ishonchlilik | update_id dedup, debounce (2.5 s) + suhbat lock, rate limit, LLM fallback, telefonni maskalash |

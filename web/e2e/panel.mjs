@@ -67,13 +67,16 @@ await nav("AI sozlamalari");
 await page.getByRole("radio", { name: /Lid yig'ish/ }).click();
 await page.getByLabel("Vazifalar (ssenariy)").fill("Avval yangi kolleksiyani tanishtir, keyin telefon raqamini so'ra.");
 await page.getByText("🔊 Ovozli javob").waitFor();
+await page.getByText("🛒 Tashlab ketilgan savat").waitFor();
+await page.getByLabel("Qancha vaqtdan keyin").selectOption("6");
 await page.getByRole("button", { name: "Saqlash" }).click();
 await page.getByText("✓ Saqlandi").waitFor();
 await shot("ai-settings");
 await page.reload();
 if (!(await page.getByRole("radio", { name: /Lid yig'ish/ }).getAttribute("aria-checked")).includes("true"))
   throw new Error("AI rejimi saqlanmadi");
-step("ai settings (lead mode, tasks) persisted");
+if ((await page.getByLabel("Qancha vaqtdan keyin").inputValue()) !== "6") throw new Error("savat eslatmasi saqlanmadi");
+step("ai settings (lead mode, tasks, cart reminder) persisted");
 
 // 5. Test chat (LLM kaliti yo'q → zaxira javob)
 await nav("Test chat");

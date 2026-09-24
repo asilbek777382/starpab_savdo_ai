@@ -1,6 +1,8 @@
+import contextlib
 import logging
 from datetime import UTC, datetime, timedelta
 
+from redis.exceptions import LockError
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -12,6 +14,7 @@ from app.services.catalog import SYNONYMS_MARKER, with_synonyms
 from app.services.conversation import reply_to_conversation
 from app.services.crypto import decrypt, encrypt
 from app.services.ingest import debounce_key
+from app.services.reminders import due_conversations, send_cart_reminder
 from app.telegram.notify import notify_shop
 
 log = logging.getLogger(__name__)
@@ -100,3 +103,25 @@ async def refresh_instagram_tokens(ctx: dict) -> str:
 
 
 IG_RECONNECT = "⚠️ Instagram ulanishi muddati tugayapti. Panel → Ulash → Instagram'ni qayta ulang."
+
+
+async def send_cart_reminders(ctx: dict) -> str:
+    """Tashlab ketilgan savatlar: har bir suhbat o'z qulfi ostida (AI javobi bilan to'qnashmasligi uchun)."""
+    rt = get_runtime()
+    async with get_sessionmaker()() as session:
+        ids = await due_conversations(session)
+    sent = 0
+    for conv_id in ids:
+        lock = rt.redis.lock(f"lock:conv:{conv_id}", timeout=60, blocking_timeout=0)
+        if not await lock.acquire():
+            continue  # hozir AI javob yozyapti — keyingi safar
+        try:
+            async with get_sessionmaker()() as session:
+                result = await send_cart_reminder(session, rt, conv_id)
+            sent += result.status == "sent"
+        except Exception:  # noqa: BLE001
+            log.exception("Savat eslatmasi xatosi (conv=%s)", conv_id)
+        finally:
+            with contextlib.suppress(LockError):  # timeout o'tib ketgan bo'lsa qulf allaqachon bo'shagan
+                await lock.release()
+    return f"due={len(ids)} sent={sent}"

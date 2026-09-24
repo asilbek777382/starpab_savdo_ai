@@ -117,6 +117,29 @@ export function AiSettingsPage() {
             </div>
           )}
         </Card>
+        <Card title={t("ai.cart")}>
+          <Toggle
+            checked={s.cart_reminder_enabled}
+            onChange={(v) => setS({ ...s, cart_reminder_enabled: v })}
+            label={t("ai.cart_enabled")}
+            hint={t("ai.cart_hint")}
+          />
+          {s.cart_reminder_enabled && (
+            <div className="mt-4 max-w-xs">
+              <Select
+                label={t("ai.cart_hours")}
+                value={s.cart_reminder_hours}
+                onChange={(e) => setS({ ...s, cart_reminder_hours: Number(e.target.value) })}
+              >
+                {[1, 2, 3, 6, 12].map((h) => (
+                  <option key={h} value={h}>
+                    {t("ai.cart_after", { n: h })}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
+        </Card>
         <Card>
           <div className="space-y-5">
             <Textarea label={t("ai.tasks")} hint={t("ai.tasks_hint")} rows={5} value={s.ai_tasks} onChange={(e) => setS({ ...s, ai_tasks: e.target.value })} maxLength={4000} />

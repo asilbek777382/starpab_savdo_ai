@@ -86,3 +86,6 @@ class ShopSettings(Base):
     # Ovozli javob: off — yo'q, on_voice — mijoz ovozli yozsa, always — har doim (matn bilan birga)
     voice_mode: Mapped[str] = mapped_column(String(20), default="off", server_default="off")
     voice_gender: Mapped[str] = mapped_column(String(10), default="female", server_default="female")
+    # Tashlab ketilgan savat: mijoz savatni to'ldirib, N soat jim tursa — bitta eslatma
+    cart_reminder_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    cart_reminder_hours: Mapped[int] = mapped_column(Integer, default=3, server_default="3")

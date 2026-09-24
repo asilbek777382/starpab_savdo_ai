@@ -11,7 +11,12 @@ from app.config import get_settings
 from app.runtime import Runtime, get_runtime, set_runtime
 from app.services.embeddings import get_embedding_provider
 from app.services.tts import get_tts
-from app.worker.tasks import enrich_product, process_conversation, refresh_instagram_tokens
+from app.worker.tasks import (
+    enrich_product,
+    process_conversation,
+    refresh_instagram_tokens,
+    send_cart_reminders,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -40,7 +45,10 @@ async def shutdown(ctx: dict) -> None:
 
 class WorkerSettings:
     functions = [process_conversation, enrich_product]
-    cron_jobs = [cron(refresh_instagram_tokens, hour=3, minute=0)]
+    cron_jobs = [
+        cron(refresh_instagram_tokens, hour=3, minute=0),
+        cron(send_cart_reminders, minute=set(range(0, 60, 10))),  # har 10 daqiqada
+    ]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = RedisSettings.from_dsn(get_settings().redis_url)
