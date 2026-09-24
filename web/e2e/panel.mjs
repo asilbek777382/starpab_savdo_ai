@@ -66,6 +66,7 @@ step("shop settings saved");
 await nav("AI sozlamalari");
 await page.getByRole("radio", { name: /Lid yig'ish/ }).click();
 await page.getByLabel("Vazifalar (ssenariy)").fill("Avval yangi kolleksiyani tanishtir, keyin telefon raqamini so'ra.");
+await page.getByText("🔊 Ovozli javob").waitFor();
 await page.getByRole("button", { name: "Saqlash" }).click();
 await page.getByText("✓ Saqlandi").waitFor();
 await shot("ai-settings");
@@ -79,6 +80,7 @@ await nav("Test chat");
 await page.getByLabel(/Masalan/).fill("Qora ko'ylak 42 razmer bormi?");
 await page.getByRole("button", { name: "Yuborish" }).click();
 await page.getByText("Xabaringiz qabul qilindi", { exact: false }).waitFor({ timeout: 60_000 });
+await page.getByLabel(/Ovozli xabar sifatida/).waitFor();
 await shot("test-chat");
 step("test chat round-trip");
 

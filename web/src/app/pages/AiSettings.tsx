@@ -87,6 +87,36 @@ export function AiSettingsPage() {
             </div>
           )}
         </Card>
+        <Card title={t("ai.voice")}>
+          <p className="mb-4 text-sm text-slate-600">{t("ai.voice_hint")}</p>
+          {!s.voice_available && <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2.5 text-sm text-amber-900 ring-1 ring-amber-200">{t("ai.voice_unavailable")}</p>}
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("ai.voice")}>
+            {(["off", "on_voice", "always"] as const).map((mode) => (
+              <button
+                type="button"
+                role="radio"
+                key={mode}
+                aria-checked={s.voice_mode === mode}
+                disabled={!s.voice_available && mode !== "off"}
+                onClick={() => setS({ ...s, voice_mode: mode })}
+                className={cx(
+                  "rounded-full px-4 py-2 text-sm font-medium ring-1 transition disabled:cursor-not-allowed disabled:opacity-50",
+                  s.voice_mode === mode ? "bg-brand-700 text-white ring-brand-700" : "bg-white text-slate-700 ring-slate-200 hover:ring-brand-500",
+                )}
+              >
+                {t(`ai.voice.${mode}`)}
+              </button>
+            ))}
+          </div>
+          {s.voice_mode !== "off" && (
+            <div className="mt-4 max-w-xs">
+              <Select label={t("ai.voice_gender")} value={s.voice_gender} onChange={(e) => setS({ ...s, voice_gender: e.target.value as Settings["voice_gender"] })}>
+                <option value="female">{t("ai.voice.female")}</option>
+                <option value="male">{t("ai.voice.male")}</option>
+              </Select>
+            </div>
+          )}
+        </Card>
         <Card>
           <div className="space-y-5">
             <Textarea label={t("ai.tasks")} hint={t("ai.tasks_hint")} rows={5} value={s.ai_tasks} onChange={(e) => setS({ ...s, ai_tasks: e.target.value })} maxLength={4000} />

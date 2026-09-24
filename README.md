@@ -13,6 +13,7 @@ Asosiy tamoyil: **AI hech narsani o'ylab topmaydi.** Narx, qoldiq va yetkazib be
 | Qism | Tavsif |
 |---|---|
 | Kanallar | Telegram Business (do'kon akkauntidan javob), oddiy bot rejimi (`t.me/<bot>?start=shop_<id>`), Instagram Direct |
+| Ovoz | Mijoz ovozini tushunadi (STT) va ovoz bilan javob beradi (Azure TTS, o'zbek/rus) |
 | AI | Claude, tool calling: `search_products`, `get_product`, `send_product_photos`, `update_cart`, `get_delivery_info`, `create_order`, `save_lead`, `handoff_to_human` |
 | AI rejimlari | **sell** — suhbatdan buyurtmagacha; **lead** — tanishtiradi, telefon raqamini so'raydi, operatorga yuboradi |
 | Vazifalar | Sotuvchi AI'ga erkin matnda ssenariy yozadi (`/tasks` yoki API) |
@@ -145,6 +146,18 @@ so'ng panelda **Ulash → Instagram'ni ulash**. Token shifrlangan holda saqlanad
 yaqinlashganda yangilanadi. Instagram qoidasi: mijozning oxirgi xabaridan keyin **24 soat** ichida yozish mumkin —
 buyurtma holati xabarlari ham shu oyna ichida yuboriladi. Sotuvchi Instagram'dan o'zi javob yozsa, AI shu suhbatda
 jim turadi. Instagram Biznes va Pro tariflarida (va bepul sinovda) ochiq.
+
+## Ovozli javoblar
+
+Bot javobni ovozli xabar qilib ham yubora oladi — **o'zbek va rus tilida** (til javob matnidan aniqlanadi; o'zbek kirill
+matni ovoz uchun lotinga o'giriladi). Provayder: **Azure Speech** neyron ovozlari (`uz-UZ-MadinaNeural` /
+`uz-UZ-SardorNeural`, `ru-RU-SvetlanaNeural` / `ru-RU-DmitryNeural`; `.env` orqali almashtiriladi), natija OGG/Opus.
+
+- `.env`: `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION` (Azure portal → Speech resursi → Keys and Endpoint).
+- Sotuvchi panelda (**AI sozlamalari → Ovozli javob**) tanlaydi: *o'chiq*, *mijoz ovozli yozsa*, *har doim*; ayol yoki
+  erkak ovozi. Ovoz bilan birga matn ham yuboriladi (narx va raqamlar uchun qulay).
+- Faqat Telegram'da (Business va bot). Instagram'da — matn. TTS ishlamasa yoki javob juda uzun bo'lsa — faqat matn.
+- Test chatda "Ovozli xabar sifatida yuborish" belgisini qo'yib, javobni panelning o'zida eshitish mumkin.
 
 ## Web panel
 

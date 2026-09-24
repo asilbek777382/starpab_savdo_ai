@@ -59,6 +59,9 @@ export interface Settings {
   ai_tasks: string;
   lead_chat_id: number | null;
   handoff_after_lead: boolean;
+  voice_mode: "off" | "on_voice" | "always";
+  voice_gender: "female" | "male";
+  voice_available: boolean;
 }
 
 export interface Variant {
@@ -186,9 +189,17 @@ export interface Channels {
 
 export interface TestChatResult {
   status: string;
-  replies: { type: "text" | "photos"; text?: string; photos?: string[]; caption?: string | null }[];
+  replies: {
+    type: "text" | "photos" | "voice";
+    text?: string;
+    photos?: string[];
+    caption?: string | null;
+    audio_b64?: string;
+    mime?: string;
+  }[];
   order_number: number | null;
   lead_id: number | null;
+  voice: boolean;
   handed_off: boolean;
   tools: { tool: string; input: unknown; result: unknown }[];
 }

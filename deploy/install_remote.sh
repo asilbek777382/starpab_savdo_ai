@@ -78,6 +78,10 @@ else
   IG_APP_ID="$(ask '  IG_APP_ID (Enter — o'"'"'tkazib yuborish)')"
   IG_APP_SECRET=""
   [ -n "$IG_APP_ID" ] && IG_APP_SECRET="$(ask_secret '  IG_APP_SECRET')"
+  echo "Ovozli javoblar — Azure Speech (ixtiyoriy):"
+  AZURE_SPEECH_KEY="$(ask_secret '  AZURE_SPEECH_KEY (Enter — o'"'"'tkazib yuborish)')"
+  AZURE_SPEECH_REGION=""
+  [ -n "$AZURE_SPEECH_KEY" ] && AZURE_SPEECH_REGION="$(ask '  AZURE_SPEECH_REGION (masalan westeurope)')"
   [ -n "$ANTHROPIC_API_KEY" ] && [ -n "$BOT_TOKEN" ] && [ -n "$BOT_USERNAME" ] || die "ANTHROPIC_API_KEY, BOT_TOKEN, BOT_USERNAME majburiy"
   remote_in "umask 077; cat > '$APP_DIR/.env'" <<EOF
 # Navbatchi AI — deploy/install_remote.sh yaratgan ($(date -u +%Y-%m-%dT%H:%MZ))
@@ -92,6 +96,8 @@ LLM_FALLBACK_MODEL=claude-sonnet-5
 IG_APP_ID=$IG_APP_ID
 IG_APP_SECRET=$IG_APP_SECRET
 IG_VERIFY_TOKEN=$(rand)
+AZURE_SPEECH_KEY=$AZURE_SPEECH_KEY
+AZURE_SPEECH_REGION=$AZURE_SPEECH_REGION
 SECRET_KEY=$(rand)$(rand)
 COOKIE_SECURE=false
 POSTGRES_PASSWORD=$(rand)

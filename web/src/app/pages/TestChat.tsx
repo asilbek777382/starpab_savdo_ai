@@ -6,19 +6,20 @@ import type { TestChatResult } from "../types";
 import { Button, Card, cx, ErrorBox, PageHeader } from "../ui";
 import { testedKey } from "./Dashboard";
 
-type Line = { from: "me" | "ai" | "photo" | "note"; text: string };
+type Line = { from: "me" | "ai" | "photo" | "note" | "voice"; text: string; audio?: string };
 
 export function TestChatPage() {
   const { t } = useI18n();
   const [lines, setLines] = useState<Line[]>([]);
   const [text, setText] = useState("");
+  const [asVoice, setAsVoice] = useState(false);
   const [tools, setTools] = useState<TestChatResult["tools"]>([]);
   const resetNext = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => endRef.current?.scrollIntoView({ block: "end" }), [lines]);
 
   const send = useMutation({
-    mutationFn: (message: string) => post<TestChatResult>("/api/test-chat", { message, reset: resetNext.current }),
+    mutationFn: (message: string) => post<TestChatResult>("/api/test-chat", { message, reset: resetNext.current, as_voice: asVoice }),
     onSuccess: (r) => {
       resetNext.current = false;
       try {
@@ -27,7 +28,11 @@ export function TestChatPage() {
         /* e'tiborsiz */
       }
       const out: Line[] = r.replies.map((x) =>
-        x.type === "photos" ? { from: "photo", text: `🖼 ${x.photos?.length ?? 0} × ${x.caption ?? ""}` } : { from: "ai", text: x.text ?? "" },
+        x.type === "photos"
+          ? { from: "photo", text: `🖼 ${x.photos?.length ?? 0} × ${x.caption ?? ""}` }
+          : x.type === "voice"
+            ? { from: "voice", text: t("test.voice_reply"), audio: `data:${x.mime ?? "audio/ogg"};base64,${x.audio_b64}` }
+            : { from: "ai", text: x.text ?? "" },
       );
       if (r.status === "ai_off") out.push({ from: "note", text: t("test.ai_off") });
       if (r.order_number) out.push({ from: "note", text: t("test.order", { n: r.order_number }) });
@@ -41,7 +46,7 @@ export function TestChatPage() {
     e.preventDefault();
     const msg = text.trim();
     if (!msg) return;
-    setLines((l) => [...l, { from: "me", text: msg }]);
+    setLines((l) => [...l, { from: "me", text: asVoice ? `🎤 ${msg}` : msg }]);
     setText("");
     send.mutate(msg);
   };
@@ -73,9 +78,17 @@ export function TestChatPage() {
                     l.from === "ai" && "rounded-bl-md bg-white",
                     l.from === "photo" && "rounded-bl-md bg-white text-slate-500",
                     l.from === "note" && "bg-brand-700 text-xs font-medium text-white",
+                    l.from === "voice" && "rounded-bl-md bg-white",
                   )}
                 >
-                  {l.text}
+                  {l.audio ? (
+                    <span className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-slate-500">🔊 {l.text}</span>
+                      <audio controls src={l.audio} className="h-9 w-64 max-w-full" />
+                    </span>
+                  ) : (
+                    l.text
+                  )}
                 </div>
               </div>
             ))}
@@ -100,6 +113,10 @@ export function TestChatPage() {
               {t("test.send")}
             </Button>
           </form>
+          <label className="flex items-center gap-2 px-3 pb-3 text-sm text-slate-600">
+            <input type="checkbox" checked={asVoice} onChange={(e) => setAsVoice(e.target.checked)} className="h-4 w-4 accent-brand-700" />
+            🎤 {t("test.as_voice")}
+          </label>
           <div className="px-3 pb-3">
             <ErrorBox error={send.error} />
           </div>
