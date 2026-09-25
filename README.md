@@ -73,12 +73,17 @@ docker compose exec api python -m app.cli make-admin +998901234567
 
 ```bash
 git checkout claude/gracious-brahmagupta-4vl0o5 && git pull
+cp deploy/secrets.env.example deploy/secrets.env   # kalitlarni to'ldiring (git'ga tushmaydi)
 bash deploy/install_remote.sh            # HOST=root@<ip> KEY=~/.ssh/<kalit> APP_DIR=/home/online_savdo (standart)
 ```
 
+`deploy/secrets.env` bo'lsa skript hech narsa so'ramaydi (Claude Code kabi vositalar ham ishga tushira oladi); bo'lmasa
+kalitlarni terminalda yashirin so'raydi. Batafsil runbook va qoidalar — `CLAUDE.md`.
+
 Skript serverni tekshiradi (Docker bo'lmasa to'xtaydi), 8090–8099 oralig'idan bo'sh port tanlaydi, kodni `APP_DIR` ga
-ko'chiradi, kalitlarni yashirin so'rab serverdagi `.env` ga (chmod 600) yozadi, `docker compose` bilan ishga tushiradi va
-platforma adminini yaratadi. Qayta ishga tushirish — yangilash (mavjud `.env` saqlanadi; `--reconfigure` — qayta sozlash).
+ko'chiradi, kalitlarni serverdagi `.env` ga (chmod 600) yozadi, `docker compose` bilan ishga tushiradi va
+platforma adminini yaratadi. Qayta ishga tushirish — yangilash (mavjud `.env` saqlanadi; `--reconfigure` — qayta sozlash,
+baza paroli va `SECRET_KEY` saqlanib qoladi).
 
 ### Domensiz serverga (boshqa loyihalar bilan yonma-yon)
 
